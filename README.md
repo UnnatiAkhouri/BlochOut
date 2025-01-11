@@ -1,2 +1,3 @@
 # BlochOut
-A game about being trapped in a Bloch sphere and finding your way out using quantum gates and entanglement
+The Quantum Bloch Escape Game is an interactive educational tool that challenges players to navigate through quantum states represented on the Bloch sphere. In the game, the player begins with an initial qubit state trapped on the Bloch sphere and must apply a series of quantum gates and channels to reach the final "gate" that will allow them to escape. In more advanced levels, the game introduces entangled pairs of qubits, where the player must choose between local and non-local operations to achieve the goal.
+This game is designed to deepen players' understanding of quantum mechanics, quantum gates, and entanglement in a fun and engaging way.
