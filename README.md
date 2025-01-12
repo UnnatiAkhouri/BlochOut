@@ -5,7 +5,7 @@ This game is designed to deepen players' understanding of quantum mechanics, qua
 
 Welcome to the Quantum Game! This game helps you explore quantum concepts using interactive gameplay.
 
-![Quantum Game Screenshot](assets/two_qubits.png)
+![Quantum Game Screenshot](assets/two_qubit.png)
 
 ## Features:
 - Apply quantum gates to manipulate qubits.
