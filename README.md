@@ -18,3 +18,5 @@ Welcome to the Quantum Game! This game helps you explore quantum concepts using 
 3. Run the game using `streamlit run qubit_game.py`.
 
 Enjoy exploring quantum mechanics!
+
+Image credits: The current version of the game includes background artwork by Sonalika Purkayastha. 
