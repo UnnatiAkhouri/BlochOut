@@ -4,7 +4,15 @@ import streamlit as st
 
 import base64
 
+st.set_page_config(layout="wide")
 
+st.markdown("""
+    <style>
+    .stSlider [data-baseweb=slider]{
+        width: 25%;
+    }
+    </style>
+    """,unsafe_allow_html=True)
 def set_background(image_path):
     """
     Set a background image for the Streamlit app.
@@ -17,8 +25,8 @@ def set_background(image_path):
         <style>
         .stApp {{
             background-image: url("data:image/png;base64,{encoded_img}");
-            background-size:105% ;
-            background-position:90%; /* Horizontal: center, Vertical: slightly up */
+            background-size:contain ;
+            background-position: 50%;
             background-attachment: fixed;
         }}
         </style>
@@ -27,7 +35,7 @@ def set_background(image_path):
     )
 
 
-set_background("/Users/uja5020/BlochOut/1.png")
+set_background("/Users/uja5020/BlochOut/4.png")
 
 st.title('BlochOut - Dual Qubits')
 
@@ -192,16 +200,24 @@ def plot_bloch_sphere(bloch_vector, final_bloch, color, title):
         name=""
     ))
 
+    chappal_data = chappal_data(bloch_vector[0], bloch_vector[1], bloch_vector[2])
+
+    fig.add_trace(
+        go.Scatter3d(x=chappal_data[0], y=chappal_data[1],
+                     z=chappal_data[2],
+                     mode='lines', line=dict(color='black', width=4)))
+
     fig.update_layout(
-        scene=dict(
+        scene=
+        dict(
             xaxis=dict(nticks=4, range=[-1, 1], showbackground=False, zeroline=False),
             yaxis=dict(nticks=4, range=[-1, 1], showbackground=False, zeroline=False),
             zaxis=dict(nticks=4, range=[-1, 1], showbackground=False, zeroline=False),
             bgcolor='rgba(0,0,0,0)',  # Transparent background for the entire 3D plot
-        ),
+        ),autosize=False, width=550, height=550,
         paper_bgcolor='rgba(0,0,0,0)',  # Transparent background for the entire figure
         margin=dict(l=0, r=0, b=0, t=0),
-        title=title
+        #title=title
     )
     st.plotly_chart(fig)
 
@@ -242,7 +258,7 @@ def draw_circuit(gate_history, color, circuit_key):
         xaxis=dict(range=[0, max_gates + 1], zeroline=False, showticklabels=False),
         yaxis=dict(range=[-1, 1], zeroline=False, showticklabels=False),
         margin=dict(l=0, r=0, b=0, t=0),
-        height=200,
+        height=100,width=400,
         showlegend=False
     )
     st.plotly_chart(circuit_fig, key=circuit_key)
@@ -259,9 +275,9 @@ def display_state_and_rho(state_vector):
 
 
 # Display Bloch spheres side by side
-col1, col2 = st.columns(2)
+col1, col2,col3,col4 = st.columns([5,5,5,5])
 
-with col1:
+with col2:
     st.header("Qubit 1")
     if 'initial_state_vector1' not in st.session_state:
         st.session_state.initial_state_vector1 = generate_random_state()
@@ -333,7 +349,7 @@ with col1:
 
 
 
-with col2:
+with col3:
     st.header("Qubit 2")
     if 'initial_state_vector2' not in st.session_state:
         st.session_state.initial_state_vector2 = generate_random_state()
