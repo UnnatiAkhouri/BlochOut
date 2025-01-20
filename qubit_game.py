@@ -35,7 +35,7 @@ def set_background(image_path):
     )
 
 
-set_background("/Users/uja5020/BlochOut/4.png")
+set_background("/Users/jackiedipietro/Documents/GitHub/BlochOut/4.png")
 
 st.title('BlochOut - Dual Qubits')
 
@@ -200,12 +200,12 @@ def plot_bloch_sphere(bloch_vector, final_bloch, color, title):
         name=""
     ))
 
-    chappal_data = chappal_data(bloch_vector[0], bloch_vector[1], bloch_vector[2])
+    #chappal_data = chappal_data(bloch_vector[0], bloch_vector[1], bloch_vector[2])
 
-    fig.add_trace(
-        go.Scatter3d(x=chappal_data[0], y=chappal_data[1],
-                     z=chappal_data[2],
-                     mode='lines', line=dict(color='black', width=4)))
+    #fig.add_trace(
+        #go.Scatter3d(x=chappal_data[0], y=chappal_data[1],
+                     #z=chappal_data[2],
+                     #mode='lines', line=dict(color='black', width=4)))
 
     fig.update_layout(
         scene=
