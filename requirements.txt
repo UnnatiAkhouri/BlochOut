@@ -1,0 +1,5 @@
+plotly==5.5.0
+numpy==1.23.0
+streamlit==1.14.0
+matplotlib==3.9.4
+qutip==5.0.3
