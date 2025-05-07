@@ -4,44 +4,185 @@ import streamlit as st
 from qutip import *
 import random
 import matplotlib.pyplot as plt
-#from qutip import Qobj
-
+import time
 import base64
 
+#Setups for the game visuals and backgrounds
 st.set_page_config(layout="wide")
 
+#Code for adding a slider for channels like phase damping and amplitude damping
 st.markdown("""
     <style>
-    .stSlider [data-baseweb=slider]{
-        width: 25%;
+    .stSlider [data-baseweb=slider] {
+        width: 65%;
+    }
+    /* Target multiple possible selectors for the slider value */
+    [data-testid="stSliderFormattedValue"],
+    .stSlider p,
+    .stSlider div[data-baseweb="typography"],
+    .stSlider [role="slider"] + div {
+        display: none !important;
     }
     </style>
-    """,unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
+
+#font size and button size
+def set_custom_style():
+    st.markdown("""
+        <style>
+        /* Increase base font size for all text */
+        .stApp {
+            font-size: 30px;
+        }
+        /* Hide slider formatted value */
+        [data-testid="stSliderFormattedValue"] {
+            display: none !important;
+        }
+        
+        /* Or alternatively, style it properly */
+        /*
+        [data-testid="stSliderFormattedValue"] {
+            font-size: 1.5em !important;
+            width: 5em !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+        }
+
+        /* Increase font size for headers */
+        h1 {
+            font-size: 4.5em !important;
+        }
+
+        h2 {
+            font-size: 2.5em !important;
+        }
+
+        h3 {
+            font-size: 2.5em !important;
+        }
+
+        /* Increase font size for paragraph text */
+        p {
+            font-size: 2.0em !important;
+        }
+
+        /* Increase font size for markdown text */
+        .markdown-text-container {
+            font-size: 1.2em !important;
+        }
+
+        /* Make buttons larger */
+        .stButton>button {
+            font-size: 1.5em !important;
+            padding: 0.2em 1.8em !important;
+            height: auto;
+        }
+
+        /* Increase font size for input widgets */
+        .stTextInput>div>div>input {
+            font-size: 1.2em !important;
+        }
+
+        .stSelectbox>div>div>select {
+            font-size: 1.2em !important;
+        }
+
+        /* Increase size of radio buttons and checkboxes */
+        .stRadio>div {
+            font-size: 1.2em !important;
+            padding: 10px !important;
+        }
+
+        .stCheckbox>div {
+            font-size: 1.2em !important;
+            padding: 10px !important;
+        }
+
+        /* Increase slider size and text */
+        .stSlider>div>div {
+            font-size: 0.5em !important;
+        }
+
+        /* Increase size of number inputs */
+        .stNumberInput>div>div>input {
+            font-size: 1.2em !important;
+            padding: 0.5em !important;
+        }
+
+        /* Increase sidebar font size */
+        .sidebar .sidebar-content {
+            font-size: 1.2em !important;
+        }
+
+        /* Increase metrics (st.metric) font size */
+        .stMetric>div {
+            font-size: 1.2em !important;
+        }
+
+        /* Increase dataframe/table font size */
+        .dataframe {
+            font-size: 1.2em !important;
+        }
+
+        /* Increase size of file uploader */
+        .stFileUploader>div>div {
+            font-size: 1.2em !important;
+            padding: 1em !important;
+        }
+
+        /* Style for large buttons specifically */
+        .big-button {
+            font-size: 2.5em !important;
+            padding: 1em 2em !important;
+            margin: 0.5em 0 !important;
+            width: 100% !important;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
+
 def set_background(image_path):
-    """
-    Set a background image for the Streamlit app.
-    :param image_path: Path to the background image file.
-    """
+    """Set page background to specified image"""
     with open(image_path, "rb") as img_file:
         encoded_img = base64.b64encode(img_file.read()).decode()
+
     st.markdown(
         f"""
         <style>
         .stApp {{
+            background-attachment: scroll !important;
             background-image: url("data:image/png;base64,{encoded_img}");
-            background-size:contain ;
-            background-position: 50%;
-            background-attachment: fixed;
+            background-size: auto;
+            background-repeat: no-repeat;
+            background-position: center;
+            min-height: 150vh;
+        }}
+
+        /* Override any fixed positioning that might affect scrolling */
+        .main {{
+            background-color: transparent !important;
+        }}
+
+        /* Make sure content containers are transparent */
+        .block-container, [data-testid="stVerticalBlock"] {{
+            background-color: transparent !important;
+            padding-left: 0px !important;
+            padding-right: 0px !important;
+            max-width: 80% !important;
+        }}
+
+        /* Make sure plots have transparent backgrounds */
+        .js-plotly-plot .plotly .main-svg {{
+            background-color: transparent !important;
         }}
         </style>
         """,
         unsafe_allow_html=True,
     )
 
-
-set_background("/Users/jackiedipietro/Documents/GitHub/BlochOut/4.png")
-
-st.title('BlochOut - Dual Qubits')
+set_background("/Users/unnatiakhouri/Documents/GitHub/BlochOut/backgrounds/back.PNG")
+#Title of the game
+#st.title('BlochOut - Dual Qubits')
 
 # Initialize session state for gate history if it doesn't exist
 if 'gate_history1' not in st.session_state:
@@ -51,22 +192,7 @@ if 'gate_history2' not in st.session_state:
 
 
 # Function to generate a random two-qubit state
-def random_two_qubit_state():
-    # Randomly generate the complex coefficients alpha, beta, gamma, delta
-    alpha = random.uniform(0, 1) + 1j * random.uniform(0, 1)
-    beta = random.uniform(0, 1) + 1j * random.uniform(0, 1)
-    gamma = random.uniform(0, 1) + 1j * random.uniform(0, 1)
-    delta = random.uniform(0, 1) + 1j * random.uniform(0, 1)
 
-    # Normalize the coefficients so that the total probability sums to 1
-    norm = np.sqrt(abs(alpha) ** 2 + abs(beta) ** 2 + abs(gamma) ** 2 + abs(delta) ** 2)
-    alpha /= norm
-    beta /= norm
-    gamma /= norm
-    delta /= norm
-
-    # Return the normalized quantum state
-    return alpha * basis(4, 0) + beta * basis(4, 1) + gamma * basis(4, 2) + delta * basis(4, 3)
 
 
 # Hardcoded Bell States
@@ -107,8 +233,6 @@ def partial_trace(state, qubit_num):
 # Example usage
 #if __name__ == '__main__':
     # Generate a random two-qubit state
-random_state = random_two_qubit_state().full()
-random_state = np.outer(random_state, np.conj(random_state))
 
 #random_state = Qobj(random_state)
 #random_state = random_state *random_state.dag()
@@ -131,19 +255,6 @@ bell_psi_plus = np.outer(bell_psi_plus, np.conj(bell_psi_plus))
 bell_psi_minus= bell_psi_minus.full()
 bell_psi_minus = np.outer(bell_psi_minus, np.conj(bell_psi_minus))
 
-#bell_phi_plus= bell_phi_plus*bell_phi_plus.dag()
-##bell_phi_minus= bell_phi_minus*bell_phi_minus.dag()
-#bell_psi_plus= bell_psi_plus*bell_psi_plus.dag()
-#bell_psi_minus= bell_psi_minus*bell_psi_minus.dag()
-
-
-    #print("\nBell States:")
-    #print("Phi Plus:", bell_phi_plus)
-    #print("Phi Minus:", bell_phi_minus)
-    #print("Psi Plus:", bell_psi_plus)
-    #print("Psi Minus:", bell_psi_minus)
-
-    # Print W-state
 w = w_state().full()
 #w = Qobj(w)
 w = np.outer(w, np.conj(w))
@@ -167,12 +278,12 @@ def rho_2(rho_2qubit):
                   [rho_2qubit[3, 2] + rho_2qubit[1, 0], rho_2qubit[3, 3] + rho_2qubit[1, 1]]])
 
 
-rho_2qubit_initial = random_state
+#rho_2qubit_initial = random_state
 #print(ghz.ptrace([1]))
     # Compute partial trace to get Bloch vectors
-single_qubit_state_0 = rho_1(random_state)  # Trace out qubit 1, keep qubit 0
+#single_qubit_state_0 = rho_1(random_state)  # Trace out qubit 1, keep qubit 0
 #print(single_qubit_state_0)
-single_qubit_state_1 = rho_2(random_state)  # Trace out qubit 1, keep qubit 0
+#single_qubit_state_1 = rho_2(random_state)  # Trace out qubit 1, keep qubit 0
 #print(single_qubit_state_1)
 
     #print("\nSingle Qubit Bloch Vector (Traced out qubit 0):")
@@ -221,8 +332,6 @@ def bloch_vector(rho):
     # Return the Bloch vector components
     return np.array([r_x, r_y, r_z])
 
-
-
 # Function to generate a random quantum state
 def generate_random_state():
     r = np.random.uniform(0, 1)
@@ -232,8 +341,31 @@ def generate_random_state():
     beta = r * np.sin(theta / 2) * np.exp(1j * phi)
     return [alpha, beta]
 
+def two_qubit_swap_state(p1,p2,theta,corr):
+    return np.array([[(1-p1)*(1-p2), 0,corr,corr], [0,p2*np.cos(theta)** +p1*np.sin(theta)** - p1*p2,(p2-p1)*np.sin(theta)*np.cos(theta),0],
+              [corr,p1*np.cos(theta)** +p2*np.sin(theta)** - p1*p2,(p2-p1)*np.sin(theta)*np.cos(theta),corr],[corr, 0,corr,p1*p2]])
+
 # Gate functions
 import numpy as np
+def cz_gate():
+    return np.array([[1, 0, 0, 0],
+                     [0, 1, 0, 0],
+                     [0, 0, 1, 0],
+                     [0, 0, 0, -1]])
+
+def cr_gate(theta):
+    return np.array([[1, 0, 0, 0],
+                     [0, 1, 0, 0],
+                     [0, 0, 1, 0],
+                     [0, 0, 0, np.exp(1j)]])
+
+def pswap_gate(theta):
+    return np.array([
+        [1, 0, 0, 0],
+        [0, np.cos(theta), 1j * np.sin(theta), 0],
+        [0, 1j * np.sin(theta), np.cos(theta), 0],
+        [0, 0, 0, 1]
+    ])
 
 def apply_x_gate(rho):
     """Apply X gate to the given density matrix rho."""
@@ -254,6 +386,10 @@ def apply_h_gate(rho):
     """Apply H gate (Hadamard) to the given density matrix rho."""
     h_gate = (1 / np.sqrt(2)) * np.array([[1, 1], [1, -1]])
     return np.dot(h_gate, np.dot(rho, h_gate.conj().T))
+
+def apply_s_gate(rho):
+    s_gate= np.array([[1, 0],[0, 1j]])
+    return np.dot(s_gate, np.dot(rho, s_gate.conj().T))
 
 def apply_rotation_x_gate(rho, p):
     """Apply rotation gate R_x(p) to the density matrix rho."""
@@ -299,6 +435,14 @@ def pauli_y():
 def pauli_z():
     return np.array([[1, 0], [0, -1]])
 
+def s_gate():
+    return np.array([[1, 0],
+                     [0, 1j]])
+
+def t_gate():
+    return np.array([[1, 0],
+                     [0, np.exp(1j * np.pi / 4)]])
+
 def r_x_rotation(p):
     return np.array([[np.cos(p / 2), -1j * np.sin(p / 2)],
                           [-1j * np.sin(p / 2), np.cos(p / 2)]])
@@ -310,10 +454,9 @@ def r_y_rotation(p):
 def r_z_rotation(p):
     return np.array([[np.exp(-1j * p / 2), 0],
                           [0, np.exp(1j * p / 2)]])
-
 #Two qubit gates
 def cnot_gate():
-    # 2-qubit CNOT gate
+    # 2-qubit CNOT
     return np.array([[1, 0, 0, 0],
                      [0, 1, 0, 0],
                      [0, 0, 0, 1],
@@ -321,33 +464,34 @@ def cnot_gate():
 
 
 
-if 'initial_state_rho1' not in st.session_state:
-    st.session_state.initial_state_rho1 = single_qubit_state_0
+#if 'initial_state_rho1' not in st.session_state:
+#    st.session_state.initial_state_rho1 = single_qubit_state_0
 
 # Initialize the first and second state vectors
-if 'state_rho1' not in st.session_state:
+#if 'state_rho1' not in st.session_state:
     #st.session_state.state_vector1 = generate_random_state()
 
-    st.session_state.state_rho1 = st.session_state.initial_state_rho1
+#    st.session_state.state_rho1 = st.session_state.initial_state_rho1
 
-    initial_state_rho1 = st.session_state.initial_state_rho1
-
-    # Apply gates to the initial state to get the final state
-    final_state_rho1 = apply_z_gate(apply_z_gate(apply_y_gate(apply_x_gate(initial_state_rho1))))
-    final_bloch_rho1 = bloch_vector(final_state_rho1)
-
-if 'initial_state_rho2' not in st.session_state:
-    st.session_state.initial_state_rho2 = single_qubit_state_0
-
-if 'state_rho2' not in st.session_state:
-    st.session_state.state_rho2 = st.session_state.initial_state_rho2
-
-    initial_state_rho2 = st.session_state.initial_state_rho2
+ #   initial_state_rho1 = st.session_state.initial_state_rho1
 
     # Apply gates to the initial state to get the final state
-    final_state_rho2 = apply_h_gate(apply_z_gate(apply_y_gate(apply_x_gate(initial_state_rho2))))
-    final_bloch_rho2 = bloch_vector(final_state_rho2)
+#   final_state_rho1 = apply_z_gate(apply_z_gate(apply_y_gate(apply_x_gate(initial_state_rho1))))
+#    final_bloch_rho1 = bloch_vector(final_state_rho1)
 
+#if 'initial_state_rho2' not in st.session_state:
+#    st.session_state.initial_state_rho2 = single_qubit_state_0
+
+#if 'state_rho2' not in st.session_state:
+#    st.session_state.state_rho2 = st.session_state.initial_state_rho2
+
+#    initial_state_rho2 = st.session_state.initial_state_rho2
+
+    # Apply gates to the initial state to get the final state
+#    final_state_rho2 = apply_h_gate(apply_z_gate(apply_y_gate(apply_x_gate(initial_state_rho2))))
+#    final_bloch_rho2 = bloch_vector(final_state_rho2)
+
+# In the marker dict, add:
 # Function to plot Bloch sphere
 def plot_bloch_sphere(bloch_vector, final_bloch, color, title):
     fig = go.Figure()
@@ -389,6 +533,20 @@ def plot_bloch_sphere(bloch_vector, final_bloch, color, title):
         name=""
     ))
 
+
+    st.markdown(
+        """
+        <style>
+        button[kind="primary"] {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            font-size: 26px;
+            color: #4B0082;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+
     #chappal_data = chappal_data(bloch_vector[0], bloch_vector[1], bloch_vector[2])
 
     #fig.add_trace(
@@ -403,7 +561,7 @@ def plot_bloch_sphere(bloch_vector, final_bloch, color, title):
             yaxis=dict(nticks=4, range=[-1, 1], showbackground=False, zeroline=False),
             zaxis=dict(nticks=4, range=[-1, 1], showbackground=False, zeroline=False),
             bgcolor='rgba(0,0,0,0)',  # Transparent background for the entire 3D plot
-        ),autosize=False, width=550, height=550,
+        ),autosize=False, width=650, height=650,
         paper_bgcolor='rgba(0,0,0,0)',  # Transparent background for the entire figure
         margin=dict(l=0, r=0, b=0, t=0),
         #title=title
@@ -414,9 +572,8 @@ def plot_bloch_sphere(bloch_vector, final_bloch, color, title):
 # Function to update Bloch sphere and circuit
 def update_system(bloch_vector, state__rho, gate_history, circuit_color, circuit_key):
     #bloch_vector[:] = state_to_bloch_vector(state_vector)
-    bloch_vector
+    #bloch_vector
     draw_circuit(gate_history, circuit_color, circuit_key)
-
 
 # Function to draw quantum circuit
 def draw_circuit(gate_history, color, circuit_key):
@@ -453,6 +610,94 @@ def draw_circuit(gate_history, color, circuit_key):
     )
     st.plotly_chart(circuit_fig, key=circuit_key)
 
+
+def draw_two_qubit_circuit(gate_history1, gate_history2):
+    """
+    Draw a two-qubit circuit showing the last 5 gates applied to each qubit.
+
+    Parameters:
+    gate_history1 (list): List of gates applied to qubit 1
+    gate_history2 (list): List of gates applied to qubit 2
+    """
+    max_gates = 5
+    # Get the last 5 gates or fewer if not enough gates
+    truncated_history1 = gate_history1[-max_gates:] if len(gate_history1) > 0 else []
+    truncated_history2 = gate_history2[-max_gates:] if len(gate_history2) > 0 else []
+
+    # Calculate the maximum number of gates to show
+    max_cols = max(len(truncated_history1), len(truncated_history2), 1)
+
+    # Create the figure
+    circuit_fig = go.Figure()
+
+    # Add the qubit wires
+    circuit_fig.add_trace(go.Scatter(
+        x=[0, max_cols + 1],
+        y=[1, 1],
+        mode="lines",
+        line=dict(width=3, color="black"),
+        name="Qubit 1 Wire"
+    ))
+
+    circuit_fig.add_trace(go.Scatter(
+        x=[0, max_cols + 1],
+        y=[0, 0],
+        mode="lines",
+        line=dict(width=3, color="black"),
+        name="Qubit 2 Wire"
+    ))
+
+    # Add labels for the qubits
+    circuit_fig.add_annotation(
+        x=0, y=1,
+        text="Qubit 1",
+        showarrow=False,
+        font=dict(size=14, color="black")
+    )
+
+    circuit_fig.add_annotation(
+        x=0, y=0,
+        text="Qubit 2",
+        showarrow=False,
+        font=dict(size=14, color="black")
+    )
+
+    # Add gates for qubit 1
+    for i, gate in enumerate(truncated_history1):
+        circuit_fig.add_trace(go.Scatter(
+            x=[i + 1], y=[1],
+            mode="markers+text",
+            marker=dict(symbol="square", size=40, color="pink"),
+            text=[gate],
+            textposition='middle center',
+            name=f"Qubit 1 Gate {i + 1}"
+        ))
+
+    # Add gates for qubit 2
+    for i, gate in enumerate(truncated_history2):
+        circuit_fig.add_trace(go.Scatter(
+            x=[i + 1], y=[0],
+            mode="markers+text",
+            marker=dict(symbol="square", size=40, color="skyblue"),
+            text=[gate],
+            textposition='middle center',
+            name=f"Qubit 2 Gate {i + 1}"
+        ))
+
+    # Update layout
+    circuit_fig.update_layout(
+        xaxis=dict(range=[-0.5, max_cols + 1.5], zeroline=False, showticklabels=False),
+        yaxis=dict(range=[-0.5, 1.5], zeroline=False, showticklabels=False),
+        margin=dict(l=30, r=30, b=30, t=30),
+        height=200,
+        width=500,
+        showlegend=False,
+        title="Two-Qubit Circuit History (Last 5 Gates)"
+    )
+
+    # Display the circuit - use a unique key based on the lengths of both histories
+    st.plotly_chart(circuit_fig, key=f"two_qubit_circuit_{len(gate_history1)}_{len(gate_history2)}")
+
 # Function to display state and rho
 def display_state_and_rho(state_vector):
     #alpha, beta = state_vector
@@ -466,304 +711,4121 @@ def display_rho(rho):
     r_x = np.real(np.trace(np.dot(rho, sigma_x)))
     r_y = np.real(np.trace(np.dot(rho, sigma_y)))
     r_z = np.real(np.trace(np.dot(rho, sigma_z)))
-    rho_string = f"ρ = 0.5 (I + {r_x:.2f}σx + {r_y:.2f}σy + {r_z:.2f}σz)"
-    st.write(rho_string)
+    rho_string = f"$\\rho = 0.5 (I + {r_x:.2f}X + {r_y:.2f}Y + {r_z:.2f}Z)$"
+    st.markdown(f"<span style='font-size: 35px'>{rho_string}</span>", unsafe_allow_html=True)
+
+def level(score):
+    st.subheader("Challenge: Match the Bloch vectors")
+    # Add your specific level 1 mechanics
+    score  # Your scoring function
+    threshold = 45
+    if score > threshold:
+        return True
+    return False
+
+def show_progress():
+    total_levels = 5
+    progress = (st.session_state.current_level - 1) / total_levels
+    st.progress(progress)
+    #st.text(f"Level {st.session_state.current_level} of {total_levels}")
+
+if 'score' not in st.session_state:
+    st.session_state.score = 0
+
+def update_score(points):
+    st.session_state.score += points
+    st.sidebar.text(f"Total Score: {st.session_state.score}")
+
+def check_level_requirements():
+    if st.session_state.current_level == 2:
+        if st.session_state.score < 0:
+            st.warning("You need 100 points to unlock this level!")
+            return False
+    return True
+
+if 'current_level' not in st.session_state:
+    st.session_state.current_level = 1
+
+# Function to show loading animation between levels
+def level_transition():
+    with st.spinner('Loading next level...'):
+        time.sleep(2)  # Add a 2-second delay
+    st.success('Level Complete!')
+    time.sleep(1)  # Show success message for 1 second
+    st.session_state.current_level += 1
+    if 'state_rho' in st.session_state:
+        del st.session_state.state_rho
+    if 'state_rho1' in st.session_state:
+        del st.session_state.state_rho1
+    if 'state_rho2' in st.session_state:
+        del st.session_state.state_rho2
+    if 'initial_state_rho' in st.session_state:
+        del st.session_state.initial_state_rho
+    if 'initial_state_rho1' in st.session_state:
+        del st.session_state.initial_state_rho1
+    if 'initial_state_rho2' in st.session_state:
+        del st.session_state.initial_state_rho2
+    if 'final_state_rho1' in st.session_state:
+        del st.session_state.final_state_rho1
+
+        # Clear gate histories
+    if 'gate_history1' in st.session_state:
+        del st.session_state.gate_history1
+    if 'gate_history2' in st.session_state:
+        del st.session_state.gate_history2
+    #st.experimental_rerun()
+
+# ============= Quantum Gates =============
+def hadamard():
+    """Hadamard gate"""
+    return np.array([[1, 1], [1, -1]]) / np.sqrt(2)
+
+
+def pauli_x():
+    """Pauli X gate"""
+    return np.array([[0, 1], [1, 0]])
+
+
+def pauli_y():
+    """Pauli Y gate"""
+    return np.array([[0, -1j], [1j, 0]])
+
+
+def pauli_z():
+    """Pauli Z gate"""
+    return np.array([[1, 0], [0, -1]])
+
+
+def s_gate():
+    """S gate"""
+    return np.array([[1, 0], [0, 1j]])
 
 
 
-# Display Bloch spheres side by side
-col1, col2,col3,col4 = st.columns([5,5,5,5])
-
-with col2:
-    st.header("Qubit 1")
-
-    # Correct condition for checking multiple keys in session_state
-    if 'initial_state_rho1' not in st.session_state or 'initial_state_rho' not in st.session_state or 'initial_state_rho2' not in st.session_state:
-        # Initialize the session state variables if they do not exist
-        st.session_state.initial_state_rho1 = single_qubit_state_0
-        st.session_state.initial_state_rho2 = single_qubit_state_1
-        st.session_state.initial_state_rho = rho_2qubit_initial
-
-    # Initialize the state_rho variables if they do not exist
-    if 'state_rho1' not in st.session_state or 'state_rho2' not in st.session_state or 'state_rho' not in st.session_state:
-        st.session_state.state_rho1 = st.session_state.initial_state_rho1
-        st.session_state.state_rho2 = st.session_state.initial_state_rho2
-        st.session_state.state_rho = st.session_state.initial_state_rho
-
-    # Get the initial state variables
-    initial_state_rho1 = st.session_state.initial_state_rho1
-    initial_state_rho2 = st.session_state.initial_state_rho2
-    initial_state_rho = st.session_state.initial_state_rho
-
-    # Apply gates to the initial state to get the final state
-    final_state_rho1 = rho_1(ghz)
-    final_state_rho2 = rho_2(ghz)
-    final_state_rho = ghz
-    final_bloch_vector1 = bloch_vector(final_state_rho1)
-    final_bloch_vector2 = bloch_vector(final_state_rho2)
-    bloch_vector1 = bloch_vector(st.session_state.state_rho1)
-    bloch_vector2 = bloch_vector(st.session_state.state_rho2)
-
-    # Plot Bloch spheres and display the updated rho states
-    plot_bloch_sphere(bloch_vector1, final_bloch_vector1, 'pinkyl', "Bloch Sphere 1")
-    display_rho(st.session_state.state_rho1)
-
-    st.write("Apply gate to Qubit 1:")
-    if st.button('CNOT Gate (Qubit 1)'):
-        gate=cnot_gate()
-        st.session_state.state_rho =np.dot(np.dot(gate, st.session_state.state_rho), gate.T)
-        st.session_state.gate_history1.append('CN')
-        st.session_state.state_rho1=rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2=rho_2(st.session_state.state_rho)
-
-    st.write("Apply gate to Qubit 1:")
-    if st.button('X Gate (Qubit 1)'):
-        gate=pauli_x()
-        st.session_state.state_rho =np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(gate.conj().T, np.eye(2))
-        st.session_state.gate_history1.append('X')
-        st.session_state.state_rho1=rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2=rho_2(st.session_state.state_rho)
-
-        #update_system(bloch_rho1, st.session_state.state_rho1, st.session_state.gate_history1, 'pink', 'circuit1')
-
-    if st.button('Y Gate (Qubit 1)'):
-        gate = pauli_y()
-        st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(gate.conj().T,
-                                                                                                     np.eye(2))
-        st.session_state.gate_history1.append('Y')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2=rho_2(st.session_state.state_rho)
+def t_gate():
+    """T gate"""
+    return np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]])
 
 
-    if st.button('Z Gate (Qubit 1)'):
-        gate = pauli_z()
-        st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(gate.conj().T,
-                                                                                                     np.eye(2))
-        st.session_state.gate_history1.append('Z')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2=rho_2(st.session_state.state_rho)
+def r_x_rotation(p):
+    """Rotation around X axis"""
+    return np.array([
+        [np.cos(p / 2), -1j * np.sin(p / 2)],
+        [-1j * np.sin(p / 2), np.cos(p / 2)]
+    ])
+
+def phi_rotation(p):
+    return np.array([
+        [np.exp(1j*p), 0],
+        [0, np.exp(1j*p)]
+    ])
 
 
-    #if st.button('Z Gate (Qubit 1)'):
-        #st.session_state.state_rho1 = apply_z_gate(st.session_state.state_rho1)
-        #st.session_state.gate_history1.append('Z')
-        #update_system(bloch_rho1, st.session_state.state_rho1, st.session_state.gate_history1, 'pink', 'circuit1')
-
-    #if st.button('H Gate (Qubit 1)'):
-        #st.session_state.state_rho1 = apply_h_gate(st.session_state.state_rho1)
-        #st.session_state.gate_history1.append('H')
-    if st.button('H Gate (Qubit 1)'):
-        gate = hadamard()
-        st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(gate.conj().T,
-                                                                                                     np.eye(2))
-        st.session_state.gate_history1.append('H')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2=rho_2(st.session_state.state_rho)
+def r_y_rotation(p):
+    """Rotation around Y axis"""
+    return np.array([
+        [np.cos(p / 2), -np.sin(p / 2)],
+        [np.sin(p / 2), np.cos(p / 2)]
+    ])
 
 
-    st.write("Apply a qubit channel:")
-
-    px1_bar = st.slider("Rotation X angle Q1", 0.0, 1.0, 0.1)
-    if st.button('Apply Rx Channel Q1'):
-        gate = r_x_rotation(px1_bar)
-        st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(gate.conj().T,
-                                                                                                     np.eye(2))
-        st.session_state.gate_history1.append('Rx')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2=rho_2(st.session_state.state_rho)
+def r_z_rotation(p):
+    """Rotation around Z axis"""
+    return np.array([
+        [np.exp(-1j * p / 2), 0],
+        [0, np.exp(1j * p / 2)]
+    ])
 
 
-    py1_bar = st.slider("Rotation Y angle Q1", 0.0, 1.0, 0.1)
-    if st.button('Apply Ry Channel Q1'):
-        gate = r_y_rotation(py1_bar)
-        st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(gate.conj().T,
-                                                                                                     np.eye(2))
-        st.session_state.gate_history1.append('Ry')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2=rho_2(st.session_state.state_rho)
+# ============= Two Qubit Gates =============
+def cnot_gate():
+    """CNOT"""
+    return np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 0, 1],
+        [0, 0, 1, 0]
+    ])
 
 
-    pz1_bar = st.slider("Rotation Z angle Q1", 0.0, 1.0, 0.1)
-    if st.button('Apply Rz Channel Q1'):
-        gate = r_z_rotation(pz1_bar)
-        st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(gate.conj().T,
-                                                                                                     np.eye(2))
-        st.session_state.gate_history1.append('Rz')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2=rho_2(st.session_state.state_rho)
+def cz_gate():
+    """CZ gate"""
+    return np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [0, 0, 0, -1]
+    ])
 
 
-    p1_damping = st.slider("Amplitude Damping Probability Q1", 0.0, 1.0, 0.1)
-    if st.button('Apply Amplitude Damping Channel Q1'):
-        st.session_state.state_rho1 = apply_rotation_z_gate(st.session_state.state_rho1, p1_damping)
-        st.session_state.gate_history1.append(f'Amplitude Damping (p={p1_damping:.2f})')
-
-    p1_dephasing = st.slider("Dephasing Probability Q1", 0.0, 1.0, 0.1)
-    if st.button('Apply Dephasing Channel Q1'):
-        st.session_state.state_rho1 = apply_rotation_z_gate(st.session_state.state_rho1, p1_dephasing)
-        st.session_state.gate_history1.append(f'Dephasing (p={p1_dephasing:.2f})')
-    update_system(bloch_vector1, st.session_state.state_rho1, st.session_state.gate_history1, 'pink', 'circuit1')
+# ============= Quantum Channels =============
+def amplitude_damping_channel(rho, p):
+    """Apply amplitude damping channel"""
+    E0 = np.array([[1, 0], [0, np.sqrt(1 - p)]])
+    E1 = np.array([[0, np.sqrt(p)], [0, 0]])
+    return np.dot(E0, np.dot(rho, E0.conj().T)) + np.dot(E1, np.dot(rho, E1.conj().T))
 
 
-    print(st.session_state.state_rho)
+def dephasing_channel(rho, p):
+    """Apply dephasing channel"""
+    E0 = np.sqrt(1 - p) * np.eye(2)
+    E1 = np.sqrt(p) * np.array([[1, 0], [0, -1]])
+    return np.dot(E0, np.dot(rho, E0.conj().T)) + np.dot(E1, np.dot(rho, E1.conj().T))
+
+
+# ============= Bloch Sphere Visualization =============
+def plot_bloch_sphere(bloch_vector, final_bloch, color, title):
+    """Create and display Bloch sphere visualization with custom markers"""
+    fig = go.Figure()
+
+    # Create sphere
+    u = np.linspace(0, 2 * np.pi, 100)
+    v = np.linspace(0, np.pi, 100)
+    x = np.outer(np.cos(u), np.sin(v))
+    y = np.outer(np.sin(u), np.sin(v))
+    z = np.outer(np.ones(np.size(u)), np.cos(v))
+
+    # Add surface
+    fig.add_surface(x=x, y=y, z=z, colorscale=color, opacity=0.6, showscale=False)
+
+    # Function to create door shape
+    def create_door(x, y, z, scale=0.1):
+        door_x = [x - scale / 2, x + scale / 2, x + scale / 2, x - scale / 2, x - scale / 2]
+        door_y = [y - scale / 2, y - scale / 2, y + scale / 2, y + scale / 2, y - scale / 2]
+        door_z = [z, z, z, z, z]
+        return door_x, door_y, door_z
+
+    # Function to create stick figure
+    def create_stick_figure(x, y, z, scale=0.15):
+        # Head
+        head_x = [x]
+        head_y = [y]
+        head_z = [z + scale / 2]
+
+        # Body
+        body_x = [x, x]
+        body_y = [y, y]
+        body_z = [z + scale / 2, z - scale / 2]
+
+        # Arms
+        arms_x = [x - scale / 2, x + scale / 2]
+        arms_y = [y, y]
+        arms_z = [z, z]
+
+        # Legs
+        legs_x = [x - scale / 3, x + scale / 3]
+        legs_y = [y, y]
+        legs_z = [z - scale / 2, z - scale / 2]
+
+        return head_x, head_y, head_z, body_x, body_y, body_z, arms_x, arms_y, arms_z, legs_x, legs_y, legs_z
+
+    # Add door for current state
+
+    door_x, door_y, door_z = create_door(final_bloch[0], final_bloch[1], final_bloch[2])
+    fig.add_trace(go.Scatter3d(
+        x=door_x, y=door_y, z=door_z,
+        mode='lines',
+        line=dict(color='black', width=4),
+        name='State'
+    ))
+
+    # Add vector line from origin to door
+    fig.add_trace(go.Scatter3d(
+        x=[0, bloch_vector[0]], y=[0, bloch_vector[1]], z=[0, bloch_vector[2]],
+        mode='lines',
+        line=dict(color='black', width=2),
+        name=""
+    ))
+
+    # Add stick figure for final state
+    head_x, head_y, head_z, body_x, body_y, body_z, arms_x, arms_y, arms_z, legs_x, legs_y, legs_z = create_stick_figure(
+        bloch_vector[0], bloch_vector[1], bloch_vector[2]
+    )
+
+    # Add stick figure components
+    fig.add_trace(go.Scatter3d(x=head_x, y=head_y, z=head_z, mode='markers',
+                               marker=dict(size=5, color='magenta'), name='Final State'))
+    fig.add_trace(go.Scatter3d(x=body_x, y=body_y, z=body_z, mode='lines',
+                               line=dict(color='magenta', width=2), showlegend=False))
+    fig.add_trace(go.Scatter3d(x=arms_x, y=arms_y, z=arms_z, mode='lines',
+                               line=dict(color='magenta', width=2), showlegend=False))
+    fig.add_trace(go.Scatter3d(x=legs_x, y=legs_y, z=legs_z, mode='lines',
+                               line=dict(color='magenta', width=2), showlegend=False))
+
+    # Add vector line from origin to stick figure
+    fig.add_trace(go.Scatter3d(
+        x=[0, final_bloch[0]], y=[0, final_bloch[1]], z=[0, final_bloch[2]],
+        mode='lines',
+        line=dict(color='magenta', width=2),
+        showlegend=False
+    ))
+
+    # Update layout
+    fig.update_layout(
+        scene=dict(
+            xaxis=dict(nticks=4, range=[-1, 1], showbackground=False, zeroline=False),
+            yaxis=dict(nticks=4, range=[-1, 1], showbackground=False, zeroline=False),
+            zaxis=dict(nticks=4, range=[-1, 1], showbackground=False, zeroline=False),
+            bgcolor='rgba(0,0,0,0)',
+        ),
+        autosize=False,
+        width=550,
+        height=550,
+        paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(l=0, r=0, b=0, t=0),
+    )
+
+    st.plotly_chart(fig)
+
+# ============= Game UI Components =============
+def draw_circuit(gate_history, color, circuit_key):
+    """Draw quantum circuit visualization"""
+    max_gates = 5
+    truncated_history = gate_history[-max_gates:]
+    num_gates = len(truncated_history)
+
+    circuit_fig = go.Figure()
+
+    # Add wire
+    circuit_fig.add_trace(go.Scatter(
+        x=[0, num_gates + 1],
+        y=[0, 0],
+        mode="lines",
+        line=dict(width=3, color="black"),
+        name="Wire"
+    ))
+
+    # Add gates
+    for i, gate in enumerate(truncated_history):
+        circuit_fig.add_trace(go.Scatter(
+            x=[i + 1], y=[0],
+            mode="markers+text",
+            marker=dict(symbol="square", size=40, color=color),
+            text=[gate],
+            textposition='middle center',
+            name=f"Gate {i + 1}"
+        ))
+
+    circuit_fig.update_layout(
+        xaxis=dict(range=[0, max_gates + 1], zeroline=False, showticklabels=False),
+        yaxis=dict(range=[-1, 1], zeroline=False, showticklabels=False),
+        margin=dict(l=0, r=0, b=0, t=0),
+        height=100,
+        width=400,
+        showlegend=False
+    )
+
+    st.plotly_chart(circuit_fig, key=circuit_key)
+
+def random_two_qubit_state():
+    # Randomly generate the complex coefficients alpha, beta, gamma, delta
+    alpha = random.uniform(0, 1) + 1j * random.uniform(0, 1)
+    beta = random.uniform(0, 1) + 1j * random.uniform(0, 1)
+    gamma = random.uniform(0, 1) + 1j * random.uniform(0, 1)
+    delta = random.uniform(0, 1) + 1j * random.uniform(0, 1)
+
+    # Normalize the coefficients so that the total probability sums to 1
+    norm = np.sqrt(abs(alpha) ** 2 + abs(beta) ** 2 + abs(gamma) ** 2 + abs(delta) ** 2)
+    alpha /= norm
+    beta /= norm
+    gamma /= norm
+    delta /= norm
+
+    # Return the normalized quantum state
+    return alpha * basis(4, 0) + beta * basis(4, 1) + gamma * basis(4, 2) + delta * basis(4, 3)
+
+def display_density_matrix(state_rho):
+    """Display density matrix visualization"""
     st.subheader("Density Matrix Real Parts")
 
-    # Get the real part and imaginary part of the density matrix
-    rho_real = np.real(st.session_state.state_rho)
-    rho_imag = np.imag(st.session_state.state_rho)
+    rho_real = np.real(state_rho)
 
-    fig, (ax1) = plt.subplots(1, 1, figsize=(12, 6))
-
-    # Plot the real part of the density matrix with a pastel color map
+    fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
     cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
-    fig.colorbar(cax1, ax=ax1)  # Add color bar to the real part heatmap
+    fig.colorbar(cax1, ax=ax1)
     ax1.set_title("Real Part of Density Matrix")
 
-    # Adjust layout to prevent overlap
     plt.tight_layout()
-
-    # Show the figure
     st.pyplot(fig)
 
+# Functions to convert quantum state to Bloch vector and calculate rho
+def state_to_bloch_vector(state):
+    alpha, beta = state
+    x = 2 * np.real(alpha * np.conj(beta))
+    y = 2 * np.imag(alpha * np.conj(beta))
+    z = np.abs(alpha)**2 - np.abs(beta)**2
+    return np.array([x, y, z])
 
-with col3:
-    st.header("Qubit 2")
-    # Correct condition for checking multiple keys in session_state
-    if 'initial_state_rho1' not in st.session_state or 'initial_state_rho' not in st.session_state or 'initial_state_rho2' not in st.session_state:
-        # Initialize the session state variables if they do not exist
-        st.session_state.initial_state_rho1 = single_qubit_state_0
-        st.session_state.initial_state_rho2 = single_qubit_state_1
-        st.session_state.initial_state_rho = rho_2qubit_initial
+P_x= np.array([[0, 1], [1, 0]])
+P_y=np.array([[0, -1j], [1j, 0]])
+P_z=np.array([[1, 0], [0, -1]])
 
-    # Initialize the state_rho variables if they do not exist
-    if 'state_rho1' not in st.session_state or 'state_rho2' not in st.session_state or 'state_rho' not in st.session_state:
-        st.session_state.state_rho1 = st.session_state.initial_state_rho1
-        st.session_state.state_rho2 = st.session_state.initial_state_rho2
-        st.session_state.state_rho = st.session_state.initial_state_rho
-
-    # Get the initial state variables
-    initial_state_rho1 = st.session_state.initial_state_rho1
-    initial_state_rho2 = st.session_state.initial_state_rho2
-    initial_state_rho = st.session_state.initial_state_rho
-
-    # Apply gates to the initial state to get the final state
-    final_state_rho1 = rho_1(ghz)
-    final_state_rho2 = rho_2(ghz)
-    final_state_rho = ghz
-    final_bloch_vector1 = bloch_vector(final_state_rho1)
-    final_bloch_vector2 = bloch_vector(final_state_rho2)
-    bloch_vector1 = bloch_vector(st.session_state.state_rho1)
-    bloch_vector2 = bloch_vector(st.session_state.state_rho2)
-
-    # Plot Bloch spheres and display the updated rho states
-    plot_bloch_sphere(bloch_vector2, final_bloch_vector2, 'ice', "Bloch Sphere 2")
-    display_rho(st.session_state.state_rho2)
-
-    st.write("Apply gate to Qubit 2:")
-    if st.button('CNOT Gate (Qubit 2)'):
-        gate = cnot_gate()
-        st.session_state.state_rho = np.dot(np.dot(gate, st.session_state.state_rho), gate.T)
-        st.session_state.gate_history2.append('CN')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2 = rho_2(st.session_state.state_rho)
-
-    st.write("Apply gate to Qubit 2:")
-    if st.button('X Gate (Qubit 2)'):
-        gate = pauli_x()
-        st.session_state.state_rho = np.kron(np.eye(2),gate) @ st.session_state.state_rho @ np.kron(np.eye(2),gate.conj().T)
-        st.session_state.gate_history2.append('X')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2 = rho_2(st.session_state.state_rho)
-
-        # update_system(bloch_rho1, st.session_state.state_rho1, st.session_state.gate_history1, 'pink', 'circuit1')
-
-    if st.button('Y Gate (Qubit 2)'):
-        gate = pauli_y()
-        st.session_state.state_rho = np.kron(np.eye(2),gate) @ st.session_state.state_rho @ np.kron(np.eye(2),gate.conj().T)
-        st.session_state.gate_history2.append('Y')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2 = rho_2(st.session_state.state_rho)
-
-    if st.button('Z Gate (Qubit 2)'):
-        gate = pauli_z()
-        st.session_state.state_rho = np.kron(np.eye(2),gate) @ st.session_state.state_rho @ np.kron(np.eye(2),gate.conj().T)
-        st.session_state.gate_history2.append('Z')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2 = rho_2(st.session_state.state_rho)
-
-    # if st.button('Z Gate (Qubit 1)'):
-    # st.session_state.state_rho1 = apply_z_gate(st.session_state.state_rho1)
-    # st.session_state.gate_history1.append('Z')
-    # update_system(bloch_rho1, st.session_state.state_rho1, st.session_state.gate_history1, 'pink', 'circuit1')
-
-    # if st.button('H Gate (Qubit 1)'):
-    # st.session_state.state_rho1 = apply_h_gate(st.session_state.state_rho1)
-    # st.session_state.gate_history1.append('H')
-    if st.button('H Gate (Qubit 2)'):
-        gate = hadamard()
-        st.session_state.state_rho = np.kron(np.eye(2),gate) @ st.session_state.state_rho @ np.kron(np.eye(2),gate.conj().T)
-        st.session_state.gate_history2.append('H')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2 = rho_2(st.session_state.state_rho)
-
-    st.write("Apply a qubit channel:")
-
-    px2_bar = st.slider("Rotation X angle Q2", 0.0, 1.0, 0.1)
-    if st.button('Apply Rx Channel Q2'):
-        gate = r_x_rotation(px2_bar)
-        st.session_state.state_rho = np.kron(np.eye(2),gate) @ st.session_state.state_rho @ np.kron(np.eye(2),gate.conj().T)
-
-        st.session_state.gate_history2.append('Rx')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2 = rho_2(st.session_state.state_rho)
-
-    py2_bar = st.slider("Rotation Y angle Q2", 0.0, 1.0, 0.1)
-    if st.button('Apply Ry Channel Q2'):
-        gate = r_y_rotation(py2_bar)
-        st.session_state.state_rho = np.kron(np.eye(2),gate) @ st.session_state.state_rho @ np.kron(np.eye(2),gate.conj().T)
-        st.session_state.gate_history1.append('Ry')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2 = rho_2(st.session_state.state_rho)
-
-    pz2_bar = st.slider("Rotation Z angle Q2", 0.0, 1.0, 0.1)
-    if st.button('Apply Rz Channel Q2'):
-        gate = r_z_rotation(pz2_bar)
-        st.session_state.state_rho = np.kron(np.eye(2),gate) @ st.session_state.state_rho @ np.kron(np.eye(2),gate.conj().T)
-
-        st.session_state.gate_history1.append('Rz')
-        st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
-        st.session_state.state_rho2 = rho_2(st.session_state.state_rho)
-    p2_damping = st.slider("Amplitude Damping Probability Q2", 0.0, 1.0, 0.1)
-    if st.button('Apply Amplitude Damping Channel Q2'):
-        st.session_state.state_rho2 = apply_rotation_z_gate(st.session_state.state_rho1,p2_damping)
-        st.session_state.gate_history2.append(f'Amplitude Damping (p={p2_damping:.2f})')
+def compute_pauli_expansion(state_vector):
+    alpha, beta = state_vector
+    expectation_x = np.real(alpha * np.conj(beta))
+    expectation_y = np.imag(alpha * np.conj(beta))
+    expectation_z = np.abs(alpha) ** 2 - np.abs(beta) ** 2
+    rho = 0.5 * (np.eye(2) + expectation_x * np.array([[0, 1], [1, 0]]) +
+                 expectation_y * np.array([[0, -1j], [1j, 0]]) +
+                 expectation_z * np.array([[1, 0], [0, -1]]))
+    return rho, expectation_x, expectation_y, expectation_z
 
 
-    p2_dephasing = st.slider("Dephasing Probability Q2", 0.0, 1.0, 0.1)
-    if st.button('Apply Dephasing Channel Q2'):
-        st.session_state.state_rho2 = apply_rotation_z_gate(st.session_state.state_rho1,p2_dephasing)
-        st.session_state.gate_history2.append(f'Dephasing (p={p2_dephasing:.2f})')
-    update_system(bloch_vector2, st.session_state.state_rho2, st.session_state.gate_history2, 'lightblue','circuit2')
+sigma_x = np.array([[0, 1], [1, 0]])
+sigma_y = np.array([[0, -1j], [1j, 0]])
+sigma_z = np.array([[1, 0], [0, -1]])
 
-    print(st.session_state.state_rho)
-    st.subheader("Density Matrix Imaginary Parts")
+# Identity matrix
+I = np.eye(2)
 
-    # Get the real part and imaginary part of the density matrix
-    #rho_real = np.real(st.session_state.state_rho)
-    rho_imag = np.imag(st.session_state.state_rho)
+def one_qubit_state(a1,a2,a3):
+    rho_q1 = (1/2)*(np.eye(2) + a1 * sigma_x + a2 * sigma_y + a3* sigma_z)
+    rho_q2 = (1/2)*(np.eye(2))
+    rho_full = np.kron(rho_q1, rho_q2)
+    return rho_full
 
-    fig, ( ax2) = plt.subplots(1, 1, figsize=(12, 6))
 
-    # Plot the imaginary part of the density matrix with a pastel color map
-    cax2 = ax2.imshow(rho_imag, cmap="BuPu", interpolation="nearest")
-    fig.colorbar(cax2, ax=ax2)  # Add color bar to the imaginary part heatmap
-    ax2.set_title("Imaginary Part of Density Matrix")
+def bloch_vector(rho):
+    """Compute the Bloch vector from a given density matrix rho."""
+    # Compute the expectation values of the Pauli matrices
+    r_x = np.real(np.trace(np.dot(rho, sigma_x)))
+    r_y = np.real(np.trace(np.dot(rho, sigma_y)))
+    r_z = np.real(np.trace(np.dot(rho, sigma_z)))
 
-    # Adjust layout to prevent overlap
-    plt.tight_layout()
+    # Return the Bloch vector components
+    return np.array([r_x, r_y, r_z])
 
-    # Show the figure
-    st.pyplot(fig)
 
-st.write("Your task is to transform the Bloch vector to a final target state!")
+
+# Function to generate a random quantum state
+def generate_random_state():
+    r = np.random.uniform(0, 1)
+    theta = np.random.uniform(0, np.pi)
+    phi = np.random.uniform(0, 2 * np.pi)
+    alpha = r * np.cos(theta / 2)
+    beta = r * np.sin(theta / 2) * np.exp(1j * phi)
+    return [alpha, beta]
+
+# ============= Game Logic =============
+#def level():
+#    """Level 1 game logic"""
+    # Add your level 1 winning conditions here
+#    pass
+
+
+def update_score(points):
+    """Update game score"""
+    if 'score' not in st.session_state:
+        st.session_state.score = 0
+    st.session_state.score += points
+
+
+def level_transition():
+    """Handle transition between levels"""
+    with st.spinner('Loading next level...'):
+        time.sleep(2)
+    st.success('Level Complete!')
+    time.sleep(2)
+    st.session_state.current_level += 1
+    #st.experimental_rerun()
+
+
+# ============= Main Game Loop =============
+def main():
+    global cnot_gate_q1_controls_q2, cr_gate_q1_controls_q2, cnot_gate_q2_controls_q1, cr_gate_q2_controls_q1
+    st.title("Escape the Bloch")
+    set_custom_style()
+    show_progress()
+
+    if not check_level_requirements():
+        return
+
+    # Add a reset button for debugging
+    if st.sidebar.button("Reset Game"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
+
+    # Initialize current_level if not already done
+    if 'current_level' not in st.session_state:
+        st.session_state.current_level = 1
+
+    # Level 1 logic
+    if st.session_state.current_level == 1:
+        st.header("Level 1: Come back to *your-qubit-self!*")
+
+        # Initialize feedback state variables
+        if 'feedback_active' not in st.session_state:
+            st.session_state.feedback_active = False
+            st.session_state.feedback_message = ""
+            st.session_state.feedback_type = ""
+            st.session_state.gate_effect_message = ""
+
+        # Define your rho_1 and rho_2 functions
+        def rho_1(rho_2qubit):
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
+                             [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
+
+        def rho_2(rho_2qubit):
+            return np.array([[rho_2qubit[2, 2] + rho_2qubit[0, 0], rho_2qubit[2, 3] + rho_2qubit[0, 1]],
+                             [rho_2qubit[3, 2] + rho_2qubit[1, 0], rho_2qubit[3, 3] + rho_2qubit[1, 1]]])
+
+        # Story and riddle state initialization
+        if 'story_index' not in st.session_state:
+            st.session_state.story_index = 0
+            # Reduced to just 4 story parts
+            st.session_state.story_content = [
+                "You wake up and find yourself quantized. One moment you were human, the next—poof!—you are a qubit...the simplest quantum system possible. And what's more, the quantumland has trapped you in a Bloch sphere, a perfect geometric prison. The curved surface stretches in all directions, its translucent blue walls pulsing with vague symbols that look like matrices.",
+
+                "But wait a second, you see a door on the sphere—surely an anomaly that shouldn't exist in this geometrically perfect prison—and you wonder maybe it will get you out? But how to reach the door? You try to move, but the rules are different here. Linear motion is impossible. You can only rotate, superpose, dephase....",
+
+                "Suddenly, you hear a voice that seems to come from everywhere and nowhere at once. 'Ah, a new consciousness enters the quantum realm,' the voice resonates, its tone both amused and curious. 'Lost between states, are we? How delightfully uncertain!' The voice presents you with riddles and says 'finally a spin to my tale! If you wish to get back to your hooman form, you must solve some puzzles first!'",
+
+                "A control panel materializes before you—gates labeled with strange symbols: X, Y, Z, H, S, T. You recognize them somehow as quantum gates—tools to manipulate your very state of being. 'Choose wisely,' the voice purrs. 'The wrong transformation might scatter your consciousness across multiple universes. But the right one...' The voice trails off into a chuckle that sounds like static interference.",
+                
+                "But before you can learn how top navigate this world, you must first learn what each of the moves do! Solve the riddles by finding the correct gate match! But remember, it is important to figure out how many times you must apply a gate to come back to yourself! You realize this will surely help you later on even if you applied the wrong gate! You can undo the action by knowing precisely how many times you must apply the same gate!"
+            ]
+
+        if 'current_riddle' not in st.session_state:
+            st.session_state.current_riddle = 0
+            st.session_state.riddles = [
+                {
+                    "text": "Flip me over, flip me back, apply me twice and there's no lack. What gate am I that makes this track?",
+                    "answer": "X", "hint": "This gate flips |0⟩ to |1⟩ and vice versa."},
+                {
+                    "text": "Around the Y-axis I'll rotate, apply me twice and seal your fate. Back to the start, no change, no wait. What gate am I on this quantum date?",
+                    "answer": "Y", "hint": "This gate rotates around the Y-axis of the Bloch sphere."},
+                {
+                    "text": "I change your phase but not your chance, apply me two times to complete this dance. What gate am I in this quantum trance?",
+                    "answer": "Z", "hint": "This gate adds a phase flip to |1⟩ states."},
+                {
+                    "text": "I'm equal parts X, Y, and Z, apply me twice and you will see, we're back where we started, identity! What superposition gate could I be?",
+                    "answer": "H", "hint": "This gate creates superpositions of states."},
+                {
+                    "text": "A quarter turn around the Z, apply me four times, if you please. Only then will your qubit be at ease. What gate am I with such expertise?",
+                    "answer": "S", "hint": "This gate rotates by π/2 around the Z-axis."},
+                {
+                    "text": "One-eighth of a full rotation, apply me eight times for restoration. Patience is key for this quantum equation. What gate am I in this calculation?",
+                    "answer": "T", "hint": "This gate is the π/8 gate, rotating by π/4 around the Z-axis."}
+            ]
+            st.session_state.riddle_solved = False
+            st.session_state.enable_gates = False
+            st.session_state.show_hint = False
+            st.session_state.attempts = 0
+            st.session_state.score = 0
+            st.session_state.gate_effects = {
+                'X': "You feel yourself flip along the X-axis, inverting your state completely!",
+                'Y': "You spin around the Y-axis, experiencing a phase shift as your reality inverts!",
+                'Z': "A phase flip ripples through your quantum essence along the Z-axis!",
+                'H': "You're thrown into superposition, existing in multiple states simultaneously!",
+                'S': "You rotate a quarter turn, feeling the phase of your existence shift!",
+                'T': "An eighth of a rotation twists your quantum nature ever so slightly!"
+            }
+
+        # Initialize state if not already done
+        if 'initial_state_rho1' not in st.session_state:
+            rho_in = one_qubit_state(0.1, 0.2, 0.5)
+            st.session_state.initial_state_rho = rho_in
+            st.session_state.initial_state_rho1 = rho_1(rho_in)
+            st.session_state.gate_history1 = []
+            st.session_state.state_rho = rho_in
+            st.session_state.state_rho1 = st.session_state.initial_state_rho1
+
+            # Calculate final state once
+            initial_state = st.session_state.initial_state_rho1
+            st.session_state.final_state_rho1 = apply_s_gate(apply_z_gate(apply_y_gate(apply_x_gate(initial_state))))
+
+        # Add custom CSS
+        st.markdown("""
+        <style>
+        .story-container {
+            background-color: rgba(20, 20, 60, 0.8);
+            color:#f0e6ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #4d79ff;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: 0 0 15px rgba(77, 121, 255, 0.5);
+            }
+        .riddle-container {
+            background-color: rgba(50, 0, 80, 0.8);
+            color: #f0e6ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0 25px 0;
+            border: 2px solid #9966ff;
+            font-family: 'Share Tech Mono', monospace;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(153, 102, 255, 0.5);
+        }
+        .gate-effect {
+            background-color: rgba(30, 40, 90, 0.8);
+            color: #d1e0ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #6699ff;
+            font-style: italic;
+        }
+        .translucent-container {
+            background-color: rgba(240, 240, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Debug information
+        st.sidebar.write(f"Story index: {st.session_state.story_index}")
+        st.sidebar.write(f"Story length: {len(st.session_state.story_content)}")
+        st.sidebar.write(f"Gates enabled: {st.session_state.enable_gates}")
+        st.sidebar.write(f"Current riddle: {st.session_state.current_riddle}")
+        st.sidebar.write(f"Feedback active: {st.session_state.feedback_active}")
+        st.sidebar.write(f"Feedback type: {st.session_state.feedback_type}")
+
+        # Content area
+        if st.session_state.story_index < len(st.session_state.story_content):
+            # Show story
+            st.markdown(f"""
+            <div class="story-container">
+                <p style="font-size: 1.1em; line-height: 1.5;">{st.session_state.story_content[st.session_state.story_index]}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Continue button
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.button("Continue", key="story_next"):
+                    st.session_state.story_index += 1
+                    if st.session_state.story_index >= len(st.session_state.story_content):
+                        st.session_state.enable_gates = True
+                    st.rerun()
+        else:
+            # Story is complete, show riddles and game
+            if st.session_state.current_riddle < len(st.session_state.riddles):
+                # Show current riddle
+                current_riddle = st.session_state.riddles[st.session_state.current_riddle]
+                st.markdown(f"""
+                <div class="riddle-container">
+                    <h3 style="color: #d9b3ff;">Quantum Riddle {st.session_state.current_riddle + 1}</h3>
+                    <p style="font-size: 1.2em; line-height: 1.5; font-style: italic;">
+                        {current_riddle['text']}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Hint button
+                hint_col1, hint_col2, hint_col3 = st.columns([1, 1, 1])
+                with hint_col2:
+                    if st.button("Get Hint", key=f"hint_{st.session_state.current_riddle}"):
+                        st.session_state.show_hint = True
+
+                if st.session_state.show_hint:
+                    st.info(f"Hint: {current_riddle['hint']}")
+
+            # Create placeholders for feedback messages
+            feedback_placeholder = st.empty()
+            success_feedback_placeholder = st.empty()
+            info_feedback_placeholder = st.empty()
+
+            # Display feedback messages if active (MUST BE BEFORE GATE PROCESSING)
+            if st.session_state.feedback_active:
+                if st.session_state.feedback_type == "success":
+                    with success_feedback_placeholder:
+                        st.success(st.session_state.feedback_message)
+
+                    # Add a "Get ready for next riddle" message if not all riddles are solved
+                    if st.session_state.current_riddle < len(st.session_state.riddles):
+                        with info_feedback_placeholder:
+                            st.info("Get ready for the next riddle!")
+                elif st.session_state.feedback_type == "warning":
+                    with success_feedback_placeholder:
+                        st.warning(st.session_state.feedback_message)
+
+            # Display gate effect if it exists
+            if 'gate_effect_message' in st.session_state and st.session_state.gate_effect_message:
+                with feedback_placeholder:
+                    st.markdown(f"""
+                    <div class="gate-effect">
+                        {st.session_state.gate_effect_message}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            # Show Bloch sphere
+            final_bloch_vector1 = bloch_vector(st.session_state.final_state_rho1)
+            current_bloch_vector1 = bloch_vector(st.session_state.state_rho1)
+            plot_bloch_sphere(current_bloch_vector1, final_bloch_vector1, 'blues', "Bloch Sphere 1")
+
+            # Gate controls
+            st.write("## Apply gate to *your-qubit-self*:")
+            st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+            # Collect gate inputs
+            subcol1, subcol2 = st.columns(2)
+            with subcol1:
+                x_button = st.button('X Gate (Qubit 1)')
+                y_button = st.button('Y Gate (Qubit 1)')
+                z_button = st.button('Z Gate (Qubit 1)')
+
+            with subcol2:
+                h_button = st.button('H Gate (Qubit 1)')
+                s_button = st.button('S Gate (Qubit 1)')
+                t_button = st.button('T Gate (Qubit 1)')
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            # Process gate clicks
+            gate_applied = None
+            correct_gate = st.session_state.riddles[st.session_state.current_riddle][
+                "answer"] if st.session_state.current_riddle < len(st.session_state.riddles) else None
+
+            if x_button:
+                gate = pauli_x()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('X')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'X'
+
+            elif y_button:
+                gate = pauli_y()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('Y')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'Y'
+
+            elif z_button:
+                gate = pauli_z()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('Z')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'Z'
+
+            elif h_button:
+                gate = hadamard()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('H')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'H'
+
+            elif s_button:
+                gate = s_gate()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('S')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'S'
+
+            elif t_button:
+                gate = t_gate()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('T')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'T'
+
+            # Handle gate application and riddle solving
+            if gate_applied:
+                # Set gate effect message
+                st.session_state.gate_effect_message = st.session_state.gate_effects[gate_applied]
+
+                # Check if gate is correct
+                if gate_applied == correct_gate:
+                    st.session_state.feedback_active = True
+                    st.session_state.feedback_message = f"Correct! The {gate_applied} gate was the answer."
+                    st.session_state.feedback_type = "success"
+                    st.session_state.score += max(10 - st.session_state.attempts * 2, 1)
+                    st.session_state.current_riddle += 1
+                    st.session_state.attempts = 0
+                    st.session_state.show_hint = False
+
+                    # Check if all riddles are solved
+                    if st.session_state.current_riddle >= len(st.session_state.riddles):
+                        st.session_state.feedback_message += " You've solved all the riddles! The door on the Bloch sphere begins to glow...Scroll to the bottom to unlock the next level"
+                        st.session_state.all_complete = True
+                else:
+                    st.session_state.feedback_active = True
+                    st.session_state.feedback_message = f"That wasn't the right gate for this riddle. Try again!"
+                    st.session_state.feedback_type = "warning"
+                    st.session_state.attempts += 1
+
+                # Show balloons if all complete
+                if hasattr(st.session_state, 'all_complete') and st.session_state.all_complete:
+                    st.balloons()
+
+                # Trigger page rerun
+                st.rerun()
+
+            # Display state info
+            display_rho(st.session_state.state_rho1)
+            update_system(current_bloch_vector1, st.session_state.state_rho1, st.session_state.gate_history1, 'pink',
+                          'circuit1')
+
+            # Density matrix visualization
+            st.subheader("Density Matrix Real Parts")
+            fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+            rho_real = np.real(st.session_state.state_rho)
+            cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
+            fig.colorbar(cax1, ax=ax1)
+            ax1.set_title("Real Part of Density Matrix")
+            plt.tight_layout()
+            st.pyplot(fig)
+
+            # Level completion check
+            if st.session_state.current_riddle >= len(st.session_state.riddles) or st.session_state.score >= 50:
+                if st.button("Click when done!"):
+                    score = 50
+                    if level(score):
+                        level_transition()
+
+                if st.button("Take me to next level"):
+                    st.session_state.current_level = 2
+                    st.rerun()
+
+    if st.session_state.current_level == 2:
+        st.header("Level 2: Now find a way out of *your-qubit-self!*")
+
+        # Initialize feedback state variables
+        if 'level1b_feedback_active' not in st.session_state:
+            st.session_state.level1b_feedback_active = False
+            st.session_state.level1b_feedback_message = ""
+            st.session_state.level1b_feedback_type = ""
+            st.session_state.level1b_gate_effect_message = ""
+
+        # Define your rho_1 and rho_2 functions
+        def rho_1(rho_2qubit):
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
+                             [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
+
+        def rho_2(rho_2qubit):
+            return np.array([[rho_2qubit[2, 2] + rho_2qubit[0, 0], rho_2qubit[2, 3] + rho_2qubit[0, 1]],
+                             [rho_2qubit[3, 2] + rho_2qubit[1, 0], rho_2qubit[3, 3] + rho_2qubit[1, 1]]])
+
+        # Story and riddle state initialization
+        if 'level1b_story_index' not in st.session_state:
+            st.session_state.level1b_story_index = 0
+            # Reduced to just 4 story parts
+            st.session_state.level1b_story_content = [
+                "The voice returns, this time with a hint of mischief, 'Ah, now that you know how to move around, lets see you try to get out!'",
+                "''See that gate, don't you? Lets see of you can escape this Bloch I have created for you!",
+                "'Oh and don't you worry,' the voice adds, 'there will be puzzles guiding you all along the way...'",
+                "'But remember, any mistake you make you must undo the actions by coming back to the starting state else you may lose yourself in the infinite possibility mess!'"
+            ]
+
+        if 'level1b_current_riddle' not in st.session_state:
+            st.session_state.level1b_current_riddle = 0
+            st.session_state.level1b_riddles = [
+                {
+                    "text": "Turn 1 into 0 and 0 into 1 and you will be one step closer to being won ",
+                    "answer": "X", "hint": "It's the first gate you learned about!"},
+                {
+                    "text": "Now lets rotate about the Y, do not ask me why!",
+                    "answer": "Y", "hint": "The answer is in the question"},
+                {
+                    "text": "Without changing your chance, lets do the phase dance",
+                    "answer": "Z", "hint": "This gate adds a phase to the |1⟩ states"},
+                {
+                    "text": "Finally pass through the gate that takes half the amount of times as the longest gate to get back to the original state",
+                    "answer": "S", "hint": "T gate takes 8 turns to get back to identity so what gate am I?"}
+            ]
+            st.session_state.level1b_riddle_solved = False
+            st.session_state.level1b_enable_gates = False
+            st.session_state.level1b_show_hint = False
+            st.session_state.level1b_attempts = 0
+            st.session_state.level1b_score = 0
+            st.session_state.level1b_gate_effects = {
+                'X': "You feel yourself flip along the X-axis, inverting your state completely!",
+                'Y': "You spin around the Y-axis, experiencing a phase shift as your reality inverts!",
+                'Z': "A phase flip ripples through your quantum essence along the Z-axis!",
+                'H': "You're thrown into superposition, existing in multiple states simultaneously!",
+                'S': "You rotate a quarter turn, feeling the phase of your existence shift!",
+                'T': "An eighth of a rotation twists your quantum nature ever so slightly!"
+            }
+
+        # Initialize state if not already done
+        if 'initial_state_rho1' not in st.session_state:
+            rho_in = one_qubit_state(0.1, 0.2, 0.5)
+            st.session_state.initial_state_rho = rho_in
+            st.session_state.initial_state_rho1 = rho_1(rho_in)
+            st.session_state.gate_history1 = []
+            st.session_state.state_rho = rho_in
+            st.session_state.state_rho1 = st.session_state.initial_state_rho1
+
+            # Calculate final state once
+            initial_state = st.session_state.initial_state_rho1
+            st.session_state.final_state_rho1 = apply_s_gate(apply_z_gate(apply_y_gate(apply_x_gate(initial_state))))
+
+        # Add custom CSS
+        st.markdown("""
+        <style>
+        .story-container {
+            background-color: rgba(20, 20, 60, 0.8);
+            color:#f0e6ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #4d79ff;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: 0 0 15px rgba(77, 121, 255, 0.5);
+            }
+        .riddle-container {
+            background-color: rgba(50, 0, 80, 0.8);
+            color: #f0e6ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0 25px 0;
+            border: 2px solid #9966ff;
+            font-family: 'Share Tech Mono', monospace;
+            text-align: center;
+            box-shadow: 0 0 15px rgba(153, 102, 255, 0.5);
+        }
+        .gate-effect {
+            background-color: rgba(30, 40, 90, 0.8);
+            color: #d1e0ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #6699ff;
+            font-style: italic;
+        }
+        .translucent-container {
+            background-color: rgba(240, 240, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Debug information
+        st.sidebar.write(f"Story index: {st.session_state.level1b_story_index}")
+        st.sidebar.write(f"Story length: {len(st.session_state.level1b_story_content)}")
+        st.sidebar.write(f"Gates enabled: {st.session_state.level1b_enable_gates}")
+        st.sidebar.write(f"Current riddle: {st.session_state.level1b_current_riddle}")
+
+        # Fix missing variable reference
+        if 'level1b_feedback_active' in st.session_state:
+            st.sidebar.write(f"Feedback active: {st.session_state.level1b_feedback_active}")
+            if 'level1b_feedback_type' in st.session_state:
+                st.sidebar.write(f"Feedback type: {st.session_state.level1b_feedback_type}")
+
+        # Content area
+        if st.session_state.level1b_story_index < len(st.session_state.level1b_story_content):
+            # Show story
+            st.markdown(f"""
+            <div class="story-container">
+                <p style="font-size: 1.1em; line-height: 1.5;">{st.session_state.level1b_story_content[st.session_state.level1b_story_index]}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Continue button
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.button("Continue", key="story_next"):
+                    st.session_state.level1b_story_index += 1
+                    if st.session_state.level1b_story_index >= len(st.session_state.level1b_story_content):
+                        st.session_state.level1b_enable_gates = True
+                    st.rerun()
+        else:
+            # Story is complete, show riddles and game
+            if st.session_state.level1b_current_riddle < len(st.session_state.level1b_riddles):
+                # Show current riddle
+                level1b_current_riddle = st.session_state.level1b_riddles[st.session_state.level1b_current_riddle]
+                st.markdown(f"""
+                <div class="riddle-container">
+                    <h3 style="color: #d9b3ff;">Quantum Riddle {st.session_state.level1b_current_riddle + 1}</h3>
+                    <p style="font-size: 1.2em; line-height: 1.5; font-style: italic;">
+                        {level1b_current_riddle['text']}
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Hint button
+                hint_col1, hint_col2, hint_col3 = st.columns([1, 1, 1])
+                with hint_col2:
+                    if st.button("Get Hint", key=f"hint_{st.session_state.level1b_current_riddle}"):
+                        st.session_state.level1b_show_hint = True
+
+                if st.session_state.level1b_show_hint:
+                    st.info(f"Hint: {level1b_current_riddle['hint']}")
+
+            # Create placeholders for feedback messages
+            level1b_feedback_placeholder = st.empty()
+            level1b_success_feedback_placeholder = st.empty()
+            level1b_info_feedback_placeholder = st.empty()
+
+            # Display feedback messages if active (MUST BE BEFORE GATE PROCESSING)
+            if 'level1b_feedback_active' in st.session_state and st.session_state.level1b_feedback_active:
+                if 'level1b_feedback_type' in st.session_state and st.session_state.level1b_feedback_type == "success":
+                    with level1b_success_feedback_placeholder:
+                        st.success(st.session_state.level1b_feedback_message)
+
+                    # Add a "Get ready for next riddle" message if not all riddles are solved
+                    if st.session_state.level1b_current_riddle < len(st.session_state.level1b_riddles):
+                        with level1b_info_feedback_placeholder:
+                            st.info("Get ready for the next riddle!")
+                elif 'level1b_feedback_type' in st.session_state and st.session_state.level1b_feedback_type == "warning":
+                    with level1b_success_feedback_placeholder:
+                        st.warning(st.session_state.level1b_feedback_message)
+
+            # Display gate effect if it exists
+            if 'level1b_gate_effect_message' in st.session_state and st.session_state.level1b_gate_effect_message:
+                with level1b_feedback_placeholder:
+                    st.markdown(f"""
+                    <div class="gate-effect">
+                        {st.session_state.level1b_gate_effect_message}
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            # Show Bloch sphere
+            final_bloch_vector1 = bloch_vector(st.session_state.final_state_rho1)
+            current_bloch_vector1 = bloch_vector(st.session_state.state_rho1)
+            plot_bloch_sphere(current_bloch_vector1, final_bloch_vector1, 'blues', "Bloch Sphere 1")
+
+            # Gate controls
+            st.write("## Apply gate to *your-qubit-self*:")
+            st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+            # Collect gate inputs
+            subcol1, subcol2 = st.columns(2)
+            with subcol1:
+                x_button = st.button('X Gate (Qubit 1)')
+                y_button = st.button('Y Gate (Qubit 1)')
+                z_button = st.button('Z Gate (Qubit 1)')
+
+            with subcol2:
+                h_button = st.button('H Gate (Qubit 1)')
+                s_button = st.button('S Gate (Qubit 1)')
+                t_button = st.button('T Gate (Qubit 1)')
+
+            with st.expander("Gate controls"):
+                st.markdown("""
+                X: This gate flips |0⟩ to |1⟩ and vice versa.
+                Y: This gate rotates around the Y-axis of the Bloch sphere.
+                Z: This gate adds a phase flip to |1⟩ states.
+                H: Equal part X,Y and Z, this gate creates superpositions of states.
+                S: This gate rotates by π/2 around the Z-axis. It takes 4 turns to get back to your original self.
+                T: This gate is the π/8 gate, rotating by π/4 around the Z-axis.
+                """)
+
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            # Process gate clicks
+            gate_applied = None
+            correct_gate = st.session_state.level1b_riddles[st.session_state.level1b_current_riddle][
+                "answer"] if st.session_state.level1b_current_riddle < len(st.session_state.level1b_riddles) else None
+
+            if x_button:
+                gate = pauli_x()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('X')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'X'
+
+            elif y_button:
+                gate = pauli_y()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('Y')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'Y'
+
+            elif z_button:
+                gate = pauli_z()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('Z')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'Z'
+
+            elif h_button:
+                gate = hadamard()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('H')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'H'
+
+            elif s_button:
+                gate = s_gate()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('S')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'S'
+
+            elif t_button:
+                gate = t_gate()
+                st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                st.session_state.gate_history1.append('T')
+                st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+                gate_applied = 'T'
+
+            # Handle gate application and riddle solving
+            if gate_applied:
+                # Set gate effect message
+                st.session_state.level1b_gate_effect_message = st.session_state.level1b_gate_effects[gate_applied]
+
+                # Check if gate is correct
+                if gate_applied == correct_gate:
+                    st.session_state.level1b_feedback_active = True
+                    st.session_state.level1b_feedback_message = f"Correct! The {gate_applied} gate was the answer."
+                    st.session_state.level1b_feedback_type = "success"
+                    st.session_state.level1b_score += max(10 - st.session_state.level1b_attempts * 2, 1)
+                    st.session_state.level1b_current_riddle += 1
+                    st.session_state.level1b_attempts = 0
+                    st.session_state.level1b_show_hint = False
+
+                    # Check if all riddles are solved
+                    if st.session_state.level1b_current_riddle >= len(st.session_state.level1b_riddles):
+                        # Set a flag to show balloons AFTER rerun
+                        st.session_state.level1b_show_balloons = True
+                        st.session_state.level1b_feedback_message += " You've solved all the riddles! The door on the Bloch sphere begins to glow...Scroll to the bottom to unlock the next level"
+                        st.session_state.level1b_all_complete = True
+                else:
+                    st.session_state.level1b_feedback_active = True
+                    st.session_state.level1b_feedback_message = f"That wasn't the right gate for this riddle. Try again!"
+                    st.session_state.level1b_feedback_type = "warning"
+                    st.session_state.level1b_attempts += 1
+
+                # Trigger page rerun
+                st.rerun()
+
+            # Put this OUTSIDE any conditional blocks, at the top level of your script
+            if hasattr(st.session_state, 'level1b_show_balloons') and st.session_state.level1b_show_balloons:
+                st.balloons()
+                # Clear the flag so balloons don't keep showing
+                st.session_state.level1b_show_balloons = False
+
+            # Display state info
+            display_rho(st.session_state.state_rho1)
+            update_system(current_bloch_vector1, st.session_state.state_rho1, st.session_state.gate_history1, 'pink',
+                          'circuit1')
+
+            # Density matrix visualization
+            st.subheader("Density Matrix Real Parts")
+            fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+            rho_real = np.real(st.session_state.state_rho)
+            cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
+            fig.colorbar(cax1, ax=ax1)
+            ax1.set_title("Real Part of Density Matrix")
+            plt.tight_layout()
+            st.pyplot(fig)
+
+            # Level completion check
+            if st.session_state.level1b_current_riddle >= len(
+                    st.session_state.level1b_riddles) or st.session_state.level1b_score >= 50:
+                if st.button("Click when done!"):
+                    score = 50
+                    if level(score):
+                        level_transition()
+
+                if st.button("Take me to next level"):
+                    st.session_state.current_level = 3
+                    st.rerun()
+
+
+    elif st.session_state.current_level == 3:  # or should this be level 3?
+
+        st.header("Level 3: Quantum Rotations")
+
+        def rho_1(rho_2qubit):
+
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
+
+                             [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
+
+        def rho_2(rho_2qubit):
+
+            return np.array([[rho_2qubit[2, 2] + rho_2qubit[0, 0], rho_2qubit[2, 3] + rho_2qubit[0, 1]],
+
+                             [rho_2qubit[3, 2] + rho_2qubit[1, 0], rho_2qubit[3, 3] + rho_2qubit[1, 1]]])
+
+        # Story and riddle state initialization
+
+        if 'level2_story_index' not in st.session_state:
+            st.session_state.level2_story_index = 0
+
+            st.session_state.level2_story_content = [
+
+                "Having mastered the basic quantum gates, you face a new challenge. The voice speaks again: 'Well done, quantum traveler. But discrete operations can only take you so far...'",
+
+                "You notice the control panel has transformed. The discrete gate buttons have been replaced by continuous sliders. 'Welcome to the world of parameterized quantum rotations,' the voice continues.",
+
+                "These rotation channels allow you to apply transformations with varying strength, unlike the fixed rotations of the basic gates. The angle parameter gives you precise control over your quantum state.",
+
+                "'Use the Rx, Ry, and Rz channels to navigate the quantum realm with greater finesse. Adjust the sliders to control the rotation angle, then apply the channel to see its effect on your qubit state.'"
+
+            ]
+
+        # Initialize state if not already done
+
+        rho_2qubit_initial = one_qubit_state(0.1, 0.2, 0.5)
+
+        if 'initial_state_rho' not in st.session_state:
+            st.session_state.initial_state_rho = rho_2qubit_initial
+
+            st.session_state.initial_state_rho1 = rho_1(rho_2qubit_initial)
+
+            st.session_state.initial_state_rho2 = rho_2(rho_2qubit_initial)
+
+            st.session_state.state_rho = rho_2qubit_initial
+
+            st.session_state.state_rho1 = rho_1(rho_2qubit_initial)
+
+            st.session_state.state_rho2 = rho_2(rho_2qubit_initial)
+
+        # Initialize empty gate histories
+
+        if 'gate_history1' not in st.session_state:
+            st.session_state.gate_history1 = []
+
+        if 'gate_history2' not in st.session_state:
+            st.session_state.gate_history2 = []
+
+        # Define the target final state
+
+        if 'final_state_rho1' not in st.session_state:
+            # Make sure initial_state is properly defined before using it
+
+            initial_state = st.session_state.initial_state_rho1  # Use the already initialized state
+
+            st.session_state.final_state_rho1 = apply_z_gate(apply_z_gate(apply_y_gate(apply_x_gate(initial_state))))
+
+
+
+        # Add custom CSS for story display
+
+        st.markdown("""
+
+        <style>
+
+        .story-container {
+
+            background-color: rgba(20, 20, 60, 0.8);
+
+            color: #f0e6ff;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            margin: 15px 0;
+
+            border: 2px solid #4d79ff;
+
+            font-family: 'Share Tech Mono', monospace;
+
+            box-shadow: 0 0 15px rgba(77, 121, 255, 0.5);
+
+        }
+
+        .channel-container {
+
+            background-color: rgba(50, 10, 70, 0.6);
+
+            padding: 20px;
+
+            border-radius: 15px;
+
+            margin: 15px 0;
+
+            border: 2px solid #FF9900;
+
+            box-shadow: 0 0 15px rgba(255, 153, 0, 0.3);
+
+        }
+
+        .channel-label {
+
+            color: #9FFFCB;
+
+            font-family: 'Share Tech Mono', monospace;
+
+            font-size: 1.1em;
+
+            margin-bottom: 10px;
+
+        }
+
+        </style>
+
+        """, unsafe_allow_html=True)
+
+        # Create page layout
+
+        col1, col2, col3 = st.columns([1, 6, 1])
+
+        with col2:
+
+            # Display story if not finished
+
+            if st.session_state.level2_story_index < len(st.session_state.level2_story_content):
+
+                st.markdown(f"""
+                <div class="story-container">
+                    <p style="font-size: 1.1em; line-height: 1.5;">{st.session_state.level2_story_content[st.session_state.level2_story_index]}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Next button for story
+
+                col1, col2, col3 = st.columns([1, 1, 1])
+
+                with col2:
+
+                    if st.button("Continue", key="level2_story_next"):
+                        st.session_state.level2_story_index += 1
+                        st.rerun()
+
+            else:
+
+                # Story is complete, show the main interface
+
+                #st.header("Quantum Rotation Channels")
+
+                # Create placeholders for visualizations that will be updated after button clicks
+
+                bloch_placeholder = st.empty()
+
+                rho_placeholder = st.empty()
+
+                circuit_placeholder = st.empty()
+
+                # Current and target state visualization
+
+                final_bloch_vector1 = bloch_vector(st.session_state.final_state_rho1)
+
+                current_bloch_vector1 = bloch_vector(st.session_state.state_rho1)
+
+                with bloch_placeholder:
+
+                    plot_bloch_sphere(current_bloch_vector1, final_bloch_vector1, 'blues', "Bloch Sphere 1")
+
+                # Quantum channel controls - ONE ROW WITH THREE COLUMNS
+
+                st.markdown('<div class="channel-container">', unsafe_allow_html=True)
+
+                st.markdown('<p class="channel-label">Apply a quantum rotation:</p>', unsafe_allow_html=True)
+
+                # Create a single row with three columns
+
+                rx_col, ry_col, rz_col = st.columns(3)
+
+                # X-rotation channel
+
+                with rx_col:
+
+                    st.markdown('<div style="border-left: 4px solid #FF5555; padding-left: 10px; margin: 15px 0;">',
+                                unsafe_allow_html=True)
+
+                    st.markdown('<p style="color: #FF9999; font-weight: bold;">X-Rotation Channel</p>',
+                                unsafe_allow_html=True)
+
+                    px1_bar = st.slider("X-axis angle (π)", 0.0, 2.0, 0.1, step=0.05)
+
+                    rx_button = st.button('Apply Rx Channel')
+
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                # Y-rotation channel
+
+                with ry_col:
+
+                    st.markdown('<div style="border-left: 4px solid #55FF55; padding-left: 10px; margin: 15px 0;">',
+                                unsafe_allow_html=True)
+
+                    st.markdown('<p style="color: #99FF99; font-weight: bold;">Y-Rotation Channel</p>',
+                                unsafe_allow_html=True)
+
+                    py1_bar = st.slider("Y-axis angle (π)", 0.0, 2.0, 0.1, step=0.05)
+
+                    ry_button = st.button('Apply Ry Channel')
+
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                # Z-rotation channel
+
+                with rz_col:
+
+                    st.markdown('<div style="border-left: 4px solid #5555FF; padding-left: 10px; margin: 15px 0;">',
+                                unsafe_allow_html=True)
+
+                    st.markdown('<p style="color: #9999FF; font-weight: bold;">Z-Rotation Channel</p>',
+                                unsafe_allow_html=True)
+
+                    pz1_bar = st.slider("Z-axis angle (π)", 0.0, 2.0, 0.1, step=0.05)
+
+                    rz_button = st.button('Apply Rz Channel')
+
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # Information about channels
+
+                with st.expander("Learn about Quantum Rotation Channels"):
+
+                    st.markdown("""
+
+                    **Rx(θ)**: Rotation around the X-axis by angle θ. When θ = π, this is equivalent to the X gate.
+
+
+                    **Ry(θ)**: Rotation around the Y-axis by angle θ. When θ = π, this is equivalent to the Y gate.
+
+
+                    **Rz(θ)**: Rotation around the Z-axis by angle θ. When θ = π, this is equivalent to the Z gate.
+
+
+                    These parameterized rotation gates give you precise control over quantum rotations, allowing you to navigate the Bloch sphere with greater flexibility than the standard gates.
+
+                    """)
+
+                # Process button clicks and update state
+
+                if rx_button:
+
+                    gate = r_x_rotation(px1_bar * np.pi)  # Convert slider value to radians
+
+                    st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+
+                        gate.conj().T, np.eye(2))
+
+                    st.session_state.gate_history1.append(f'Rx({px1_bar:.2f}π)')
+
+                    st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+
+                    st.rerun()
+
+
+                elif ry_button:
+
+                    gate = r_y_rotation(py1_bar * np.pi)  # Convert slider value to radians
+
+                    st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+
+                        gate.conj().T, np.eye(2))
+
+                    st.session_state.gate_history1.append(f'Ry({py1_bar:.2f}π)')
+
+                    st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+
+                    st.rerun()
+
+
+                elif rz_button:
+
+                    gate = r_z_rotation(pz1_bar * np.pi)  # Convert slider value to radians
+
+                    st.session_state.state_rho = np.kron(gate, np.eye(2)) @ st.session_state.state_rho @ np.kron(
+
+                        gate.conj().T, np.eye(2))
+
+                    st.session_state.gate_history1.append(f'Rz({pz1_bar:.2f}π)')
+
+                    st.session_state.state_rho1 = rho_1(st.session_state.state_rho)
+
+                    st.rerun()
+
+                # Display state information
+
+                with rho_placeholder:
+
+                    display_rho(st.session_state.state_rho1)
+
+                with circuit_placeholder:
+
+                    update_system(current_bloch_vector1, st.session_state.state_rho1,
+
+                                  st.session_state.gate_history1, 'pink', 'circuit1')
+
+                # Density matrix visualization
+
+                st.subheader("Density Matrix Real Parts")
+
+                # Level completion
+
+                score = 0
+
+                if st.button("Click when done!"):
+                    score = 50
+
+                if level(score):
+                    level_transition()
+
+                st.button("Take me to next level")
+
+                fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+
+                rho_real = np.real(st.session_state.state_rho)
+
+                cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
+
+                fig.colorbar(cax1, ax=ax1)
+
+                ax1.set_title("Real Part of Density Matrix")
+
+                plt.tight_layout()
+
+                st.pyplot(fig)
+
+        # Game completion check
+
+    elif st.session_state.current_level == 4:
+
+        st.header("Level 3: Universal Gates")
+
+        # Define your rho_1 and rho_2 functions
+
+        def rho_1(rho_2qubit):
+
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
+
+                             [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
+
+        def rho_2(rho_2qubit):
+
+            return np.array([[rho_2qubit[2, 2] + rho_2qubit[0, 0], rho_2qubit[2, 3] + rho_2qubit[0, 1]],
+
+                             [rho_2qubit[3, 2] + rho_2qubit[1, 0], rho_2qubit[3, 3] + rho_2qubit[1, 1]]])
+
+        # Story and riddle state initialization
+
+        if 'level3_story_index' not in st.session_state:
+            st.session_state.level3_story_index = 0
+            st.session_state.level3_story_content = [
+
+                "The voice returns, this time with a different tone—more instructive, yet somehow more cryptic. If you must move alone in this Bloch sphere, it intones, you shall not need all these operations. All you need is the universal set of gates.",
+
+                "Before you, three gates illuminate brighter than the others: Ry, Rz, and phase shift gates. They pulse with a different quality of light, as if they're somehow more fundamental than the others.",
+
+                "\"With these alone,\" the voice continues, \"any transformation can be achieved. Any state can be reached. Any door... unlocked.\" You reach toward them, but the voice interrupts with a warning that sends a chill through your quantum state.",
+
+                "\"However,\" it whispers, \"the parameters must be precise. The angles, the phases, the timing—all must be exact. If you do not use the correct variables to build your gate, you may find yourself trapped in an infinite composition.\""
+
+            ]
+
+        # Universal gate challenge setup
+
+        if 'level3_challenge_complete' not in st.session_state:
+            st.session_state.level3_challenge_complete = False
+
+        # Initialize state if not already done
+
+        rho_2qubit_initial = one_qubit_state(0.1, 0.1, 0.5)
+
+        if 'level3_initial_state_rho' not in st.session_state:
+            st.session_state.level3_initial_state_rho = rho_2qubit_initial
+
+            st.session_state.level3_initial_state_rho1 = rho_1(rho_2qubit_initial)
+
+            st.session_state.level3_initial_state_rho2 = rho_2(rho_2qubit_initial)
+
+            st.session_state.level3_state_rho = rho_2qubit_initial
+
+            st.session_state.level3_state_rho1 = rho_1(rho_2qubit_initial)
+
+            st.session_state.level3_state_rho2 = rho_2(rho_2qubit_initial)
+
+            st.session_state.level3_final_state_rho1 = apply_h_gate(
+
+                apply_y_gate(apply_x_gate(rho_1(rho_2qubit_initial))))
+
+            st.session_state.level3_gate_history1 = []
+
+            st.session_state.level3_attempts = 0
+
+            st.session_state.level3_score = 0
+
+        # Add custom CSS
+
+        st.markdown("""
+
+        <style>
+
+        .story-container {
+
+            background-color: rgba(20, 20, 60, 0.8);
+
+            color: #f0e6ff;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            margin: 15px 0;
+
+            border: 2px solid #4d79ff;
+
+            font-family: 'Share Tech Mono', monospace;
+
+            box-shadow: 0 0 15px rgba(77, 121, 255, 0.5);
+
+        }
+
+        .riddle-container {
+
+            background-color: rgba(50, 0, 80, 0.8);
+
+            color: #f0e6ff;
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            margin: 15px 0 25px 0;
+
+            border: 2px solid #9966ff;
+
+            font-family: 'Share Tech Mono', monospace;
+
+            text-align: center;
+
+            box-shadow: 0 0 15px rgba(153, 102, 255, 0.5);
+
+        }
+
+        .gate-effect {
+
+            background-color: rgba(30, 40, 90, 0.8);
+
+            color: #d1e0ff;
+
+            padding: 15px;
+
+            border-radius: 8px;
+
+            margin: 15px 0;
+
+            border: 1px solid #6699ff;
+
+            font-style: italic;
+
+        }
+
+        .translucent-container {
+
+            background-color: rgba(240, 240, 255, 0.2);
+
+            padding: 20px;
+
+            border-radius: 10px;
+
+            margin: 10px 0;
+
+        }
+
+        </style>
+
+        """, unsafe_allow_html=True)
+
+        # Debug information
+
+        st.sidebar.write(f"Level 3 Story index: {st.session_state.level3_story_index}")
+
+        st.sidebar.write(f"Level 3 Story length: {len(st.session_state.level3_story_content)}")
+
+        st.sidebar.write(f"Level 3 Gate history: {st.session_state.level3_gate_history1}")
+
+        # Content area
+
+        col1, col2, col3 = st.columns([1, 6, 1])
+
+        with col2:
+
+            if st.session_state.level3_story_index < len(st.session_state.level3_story_content):
+
+
+                st.markdown(f"""
+                <div class="story-container">
+                    <p style="font-size: 1.1em; line-height: 1.5;">{st.session_state.level3_story_content[st.session_state.level3_story_index]}</p>
+                </div>
+                """, unsafe_allow_html=True)
+
+                # Continue button
+
+                col1, col2, col3 = st.columns([1, 1, 1])
+
+                with col2:
+
+                    if st.button("Continue", key="level3_story_next"):
+                        st.session_state.level3_story_index += 1
+
+                        st.rerun()
+
+            else:
+
+                # Story is complete, show challenge
+
+                if not st.session_state.level3_challenge_complete:
+                    st.markdown(f"""
+
+                    <div class="riddle-container">
+                        <h3 style="color: #d9b3ff;">Universal Gates Challenge</h3>
+                        <p style="font-size: 1.2em; line-height: 1.5;">
+                            A general unitary may be written as:
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    # For mathematical content, use LaTeX with Streamlit's built-in rendering
+
+                    st.latex(r'''
+                    \Large
+                    U = \begin{pmatrix}
+                    e^{i(\alpha - \beta-\delta)}\cos(\gamma) & -  e^{i(\alpha - \beta+\delta)}\sin(\gamma)\\
+                    e^{i(\alpha + \beta-\delta)}\sin(\gamma) & e^{i(\alpha+ \beta+\delta)}\cos(\gamma)
+                        \end{pmatrix}
+                    ''')
+
+                    st.markdown(f"""
+
+                    <div class="riddle-container">
+                        <p style="font-size: 1.2em; line-height: 1.5;">
+                            You need to recreate the target state using a sequence of gates in the form:
+                        </p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                    st.latex(r'''e^{i 2\delta} R_z (2 \gamma) R_y (2 \beta) R_z(\alpha)''')
+                    st.markdown(f"""
+                    <div class="gate-effect">
+                        <p>The exact values you need will appear in the target state. Quantum traveler, all you need is four pi.</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                # Show feedback placeholder for gate effects
+
+                feedback_placeholder = st.empty()
+
+                # Show Bloch sphere
+
+                final_bloch_vector1 = bloch_vector(st.session_state.level3_final_state_rho1)
+
+                current_bloch_vector1 = bloch_vector(st.session_state.level3_state_rho1)
+
+                plot_bloch_sphere(current_bloch_vector1, final_bloch_vector1, 'blues', "Bloch Sphere - Universal Gates")
+
+                # Add this after plotting the Bloch sphere but before the gate controls section
+                st.write("## Progress to Target:")
+                if hasattr(st.session_state, 'debug_distance'):
+                    # Invert and normalize the distance (closer = more progress)
+                    # Max expected distance on Bloch sphere is 2.0
+                    progress = max(0, min(1.0, 1.0 - (st.session_state.debug_distance / 2.0)))
+                    st.progress(progress)
+
+                    # Add more detailed feedback
+                    if progress > 0.95:
+                        st.success("Perfect! You're extremely close to the target state!")
+                    elif progress > 0.9:
+                        st.info("Very close! Just a tiny adjustment needed!")
+                    elif progress > 0.75:
+                        st.info("Getting closer! Keep adjusting the gates.")
+                    elif progress > 0.5:
+                        st.warning("Making progress, but still some way to go.")
+                    else:
+                        st.error("Still far from the target state. Try different gate combinations.")
+
+                    # Display numerical distance
+                    st.write(f"Distance to target: {st.session_state.debug_distance:.6f}")
+
+                # Gate controls
+
+                st.write("## Apply Universal Gates:")
+
+                st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+                # Collect gate inputs
+
+                subcol1, subcol2, subcol3 = st.columns(3)
+
+                with subcol1:
+
+                    st.markdown('<p style="color: #99FF99; font-weight: bold;">Y-Rotation Gate</p>',
+                                unsafe_allow_html=True)
+
+                    py1_bar = st.slider("Ry angle (π radians)", 0.0, 1.0, 0.1, step=0.01, key="level3_ry_slider")
+
+                    apply_ry = st.button('Apply Ry', key="level3_ry_button")
+
+                with subcol2:
+
+                    st.markdown('<p style="color: #FFCC99; font-weight: bold;">Phase Shift Gate</p>',
+                                unsafe_allow_html=True)
+
+                    phi1_bar = st.slider("Phase angle (π radians)", 0.0, 1.0, 0.1, step=0.01, key="level3_phi_slider")
+
+                    apply_phi = st.button('Apply Phase shift', key="level3_phi_button")
+
+                with subcol3:
+
+                    st.markdown('<p style="color: #9999FF; font-weight: bold;">Z-Rotation Gate</p>',
+                                unsafe_allow_html=True)
+
+                    pz1_bar = st.slider("Rz angle (π radians)", 0.0, 1.0, 0.1, step=0.01, key="level3_rz_slider")
+
+                    apply_rz = st.button('Apply Rz', key="level3_rz_button")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # Process gate clicks
+
+                gate_applied = None
+
+                gate_effect = None
+
+                if apply_ry:
+
+                    gate = np.array([[np.cos(py1_bar / 2), -np.sin(py1_bar / 2)],
+                                          [np.sin(py1_bar / 2), np.cos(py1_bar / 2)]]) # Convert to radians
+
+                    st.session_state.level3_state_rho = np.kron(gate, np.eye(
+                        2)) @ st.session_state.level3_state_rho @ np.kron(
+
+                        gate.conj().T, np.eye(2))
+
+                    st.session_state.level3_gate_history1.append(f'Ry({py1_bar:.2f}π)')
+
+                    st.session_state.level3_state_rho1 = rho_1(st.session_state.level3_state_rho)
+
+                    gate_applied = 'Ry'
+
+                    gate_effect = f"You feel yourself rotate {py1_bar:.2f}π radians around the Y-axis, shifting your quantum state!"
+
+
+                elif apply_phi:
+
+                    gate = np.array([
+                                    [1, 0],
+                                    [0, np.exp(1j * phi1_bar)]
+                                        ]) # Convert to radians
+
+                    st.session_state.level3_state_rho = np.kron(gate, np.eye(
+                        2)) @ st.session_state.level3_state_rho @ np.kron(
+
+                        gate.conj().T, np.eye(2))
+
+                    st.session_state.level3_gate_history1.append(f'Φ({phi1_bar:.2f}π)')
+
+                    st.session_state.level3_state_rho1 = rho_1(st.session_state.level3_state_rho)
+
+                    gate_applied = 'Phi'
+
+                    gate_effect = f"A phase shift of {phi1_bar:.2f}π ripples through your quantum essence, altering your state!"
+
+
+                elif apply_rz:
+
+                    gate = np.array([[np.exp(-1j * pz1_bar / 2), 0],
+                                          [0, np.exp(1j * pz1_bar / 2)]])
+
+                    st.session_state.level3_state_rho = np.kron(gate, np.eye(
+                        2)) @ st.session_state.level3_state_rho @ np.kron(
+
+                        gate.conj().T, np.eye(2))
+
+                    st.session_state.level3_gate_history1.append(f'Rz({pz1_bar:.2f}π)')
+
+                    st.session_state.level3_state_rho1 = rho_1(st.session_state.level3_state_rho)
+
+                    gate_applied = 'Rz'
+
+                    gate_effect = f"You rotate {pz1_bar:.2f}π radians around the Z-axis, feeling your quantum state transform!"
+
+                # Handle gate application effects
+
+                if gate_applied:
+
+                    with feedback_placeholder:
+
+                        st.markdown(f"""
+
+                        <div class="gate-effect">
+
+                            {gate_effect}
+
+                        </div>
+
+                        """, unsafe_allow_html=True)
+
+                    # Check if we're close to the target state
+
+                    target_vector = final_bloch_vector1
+
+                    current_vector = bloch_vector(st.session_state.level3_state_rho1)
+
+                    # Calculate distance to target
+
+                    distance = np.linalg.norm(target_vector - current_vector)
+                    # Add this right after calculating the distance
+                    # After calculating distance but before the if statement
+                    # After calculating distance but before any rerun
+                    st.session_state.debug_distance = distance
+                    st.session_state.debug_target = target_vector
+                    st.session_state.debug_current = current_vector
+
+                    if distance < 0.1:  # Close enough to target
+                        # Make sure this value persists through reruns
+                        st.session_state.level3_challenge_complete = True
+                        st.session_state.level3_score = 50
+
+                        # Show success message and balloons
+                        st.balloons()
+                        st.success("You've reached the target state! The door on the Bloch sphere begins to glow...")
+
+                        # Only rerun if we haven't already shown the success
+                        if not hasattr(st.session_state, 'success_shown'):
+                            st.session_state.success_shown = True
+                            st.rerun()
+                    else:
+                        # Only rerun if we're not at the target
+                        st.rerun()
+
+                # Display state info
+
+                display_rho(st.session_state.level3_state_rho1)
+
+                update_system(current_bloch_vector1, st.session_state.level3_state_rho1,
+                              st.session_state.level3_gate_history1, 'pink', 'circuit1')
+
+                # Add a hint section
+
+                with st.expander("Need a hint?"):
+
+                    st.markdown("""
+
+                    **Hint 1**: The target state can be reached using a specific sequence of Rz, Ry, and Rzs.
+
+
+                    **Hint 2**: Try to first align with the correct longitude using Rz, then adjust the latitude with Ry, then fix the final phase with Rz again.
+
+
+                    **Hint 3**: The parameters needed are multiples of 0.1π. Try values like 0.4π and 0.3π.
+
+                    """)
+
+                # Density matrix visualization
+
+                st.subheader("Density Matrix Real Parts")
+
+                fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+
+                rho_real = np.real(st.session_state.level3_state_rho)
+
+                cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
+
+                fig.colorbar(cax1, ax=ax1)
+
+                ax1.set_title("Real Part of Density Matrix")
+
+                plt.tight_layout()
+
+                st.pyplot(fig)
+
+                # Level completion check
+
+                if st.session_state.level3_challenge_complete or st.session_state.level3_score >= 50:
+
+                    if st.button("Click when done!", key="level3_done"):
+
+                        score = 50
+
+                        if level(score):
+                            level_transition()
+
+                    if st.button("Take me to next level", key="level3_next"):
+                        st.session_state.current_level = 4
+
+                        st.rerun()
+
+        # Game completion check
+
+    elif st.session_state.current_level == 6:
+        st.header("Level 4: Entangled Spheres")
+
+        # Define the rho functions for reduced density matrices
+        def rho_1(rho_2qubit):
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
+                             [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
+
+        def rho_2(rho_2qubit):
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[2, 2], rho_2qubit[0, 1] + rho_2qubit[2, 3]],
+                             [rho_2qubit[1, 0] + rho_2qubit[3, 2], rho_2qubit[1, 1] + rho_2qubit[3, 3]]])
+
+        # Function to draw two-qubit circuit
+        def draw_two_qubit_circuit(gate_history1, gate_history2):
+            """
+            Draw a two-qubit circuit showing the last 5 gates applied to each qubit.
+
+            Parameters:
+            gate_history1 (list): List of gates applied to qubit 1
+            gate_history2 (list): List of gates applied to qubit 2
+            """
+            max_gates = 5
+            # Get the last 5 gates or fewer if not enough gates
+            truncated_history1 = gate_history1[-max_gates:] if len(gate_history1) > 0 else []
+            truncated_history2 = gate_history2[-max_gates:] if len(gate_history2) > 0 else []
+
+            # Calculate the maximum number of gates to show
+            max_cols = max(len(truncated_history1), len(truncated_history2), 1)
+
+            # Create the figure
+            circuit_fig = go.Figure()
+
+            # Add the qubit wires
+            circuit_fig.add_trace(go.Scatter(
+                x=[0, max_cols + 1],
+                y=[1, 1],
+                mode="lines",
+                line=dict(width=3, color="black"),
+                name="Qubit 1 Wire"
+            ))
+
+            circuit_fig.add_trace(go.Scatter(
+                x=[0, max_cols + 1],
+                y=[0, 0],
+                mode="lines",
+                line=dict(width=3, color="black"),
+                name="Qubit 2 Wire"
+            ))
+
+            # Add labels for the qubits
+            circuit_fig.add_annotation(
+                x=0, y=1,
+                text="Qubit 1",
+                showarrow=False,
+                font=dict(size=14, color="black")
+            )
+
+            circuit_fig.add_annotation(
+                x=0, y=0,
+                text="Qubit 2",
+                showarrow=False,
+                font=dict(size=14, color="black")
+            )
+
+            # Add gates for qubit 1
+            for i, gate in enumerate(truncated_history1):
+                circuit_fig.add_trace(go.Scatter(
+                    x=[i + 1], y=[1],
+                    mode="markers+text",
+                    marker=dict(symbol="square", size=40, color="pink"),
+                    text=[gate],
+                    textposition='middle center',
+                    name=f"Qubit 1 Gate {i + 1}"
+                ))
+
+            # Add gates for qubit 2
+            for i, gate in enumerate(truncated_history2):
+                circuit_fig.add_trace(go.Scatter(
+                    x=[i + 1], y=[0],
+                    mode="markers+text",
+                    marker=dict(symbol="square", size=40, color="skyblue"),
+                    text=[gate],
+                    textposition='middle center',
+                    name=f"Qubit 2 Gate {i + 1}"
+                ))
+
+            # Update layout
+            circuit_fig.update_layout(
+                xaxis=dict(range=[-0.5, max_cols + 1.5], zeroline=False, showticklabels=False),
+                yaxis=dict(range=[-0.5, 1.5], zeroline=False, showticklabels=False),
+                margin=dict(l=30, r=30, b=30, t=30),
+                height=200,
+                width=500,
+                showlegend=False,
+                title="Two-Qubit Circuit History (Last 5 Gates)"
+            )
+
+            # Display the circuit - use a unique key based on the lengths of both histories
+            st.plotly_chart(circuit_fig, key=f"two_qubit_circuit_{len(gate_history1)}_{len(gate_history2)}")
+
+        # Story initialization
+        if 'level4_story_index' not in st.session_state:
+            st.session_state.level4_story_index = 0
+            st.session_state.level4_story_content = [
+                "You input the final sequence of gates, and the door on the Bloch sphere slides open with a resonant hum. Relief washes over your quantum state as you rush through the opening.",
+
+                "But something isn't right. As your consciousness settles, you realize you're still in a Bloch sphere—just a different one. And there, across the curved quantum landscape, is Sonalika, your friend who disappeared a week before you did. Their quantum signature flickers with recognition when they see you.",
+
+                "\"You made it!\" Sonalika calls out, their voice carrying across the quantum void. \"I've been waiting for—\" They stop mid-sentence as both of you suddenly lurch sideways. When you shifted your position, Sonalika moved too—perfectly mirroring your rotation but in the opposite direction.",
+
+                "The mysterious voice returns, now sounding amused. \"Congratulations on solving the first puzzle,\" it says. \"But did you really think escape would be so simple? You and your friend are now trapped in entangled Bloch spheres. Every action one takes affects the other.\"",
+
+                "You try to move toward Sonalika, but the more you struggle to approach, the further they seem to drift away. When you rotate clockwise, they rotate counterclockwise. When you try to shift your phase, theirs shifts in complementary patterns.",
+
+                "\"The only way out,\" the voice continues, \"is to master the gates of entanglement. The PSWAP to exchange your positions, the CNOT to flip states conditionally, and the CR for controlled rotations. Only by working together can you break free of this quantum prison.\"",
+
+                "Sonalika looks at you with determination in their eyes. \"We can figure this out,\" they say. \"But we'll need to coordinate our actions perfectly. When I apply my gate, you'll need to apply yours at exactly the right moment.\"",
+
+                "You notice three new controls have appeared on your quantum interface: PSWAP, CNOT, and CR, each with parameters that need precise calibration. A wrong move could entangle you both more deeply, perhaps irreversibly.",
+
+                "\"Ready to try?\" Sonalika asks, hovering a finger over their control panel. The true test has only just begun."
+            ]
+
+        # Initialize state if not already done
+        rho_2qubit_initial = two_qubit_swap_state(0.2, 0.3, np.pi / 4, 0.1)
+
+        if 'level4_initial_state_rho' not in st.session_state:
+            st.session_state.level4_initial_state_rho = rho_2qubit_initial
+            st.session_state.level4_initial_state_rho1 = rho_1(rho_2qubit_initial)
+            st.session_state.level4_initial_state_rho2 = rho_2(rho_2qubit_initial)
+            st.session_state.level4_state_rho = rho_2qubit_initial
+            st.session_state.level4_state_rho1 = rho_1(rho_2qubit_initial)
+            st.session_state.level4_state_rho2 = rho_2(rho_2qubit_initial)
+
+            # Initialize combined gate history - each entry is a tuple (time_step, qubit, gate_name)
+            st.session_state.level4_combined_gate_history = []
+            st.session_state.level4_time_step = 0
+
+            # Define target state
+            not_gate = np.array([[1, 0, 0, 0],
+                                 [0, 1, 0, 0],
+                                 [0, 0, 0, 1],
+                                 [0, 0, 1, 0]])  # CNOT
+
+            # Function for controlled rotation gate
+            cr_gate_func = lambda theta: np.array([[1, 0, 0, 0],
+                                                   [0, 1, 0, 0],
+                                                   [0, 0, 1, 0],
+                                                   [0, 0, 0, np.exp(1j * theta)]])
+
+            # Function for parameterized swap gate
+            swap_gate_func = lambda theta: np.array([
+                [1, 0, 0, 0],
+                [0, np.cos(theta), 1j * np.sin(theta), 0],
+                [0, 1j * np.sin(theta), np.cos(theta), 0],
+                [0, 0, 0, 1]
+            ])
+
+            # Calculate target state by applying gates
+            state_after_not = np.dot(np.dot(not_gate, rho_2qubit_initial), not_gate.T)
+            cr_with_theta = cr_gate_func(3)
+            state_after_cr = np.dot(np.dot(cr_with_theta, state_after_not), cr_with_theta.T.conj())
+            swap_with_theta = swap_gate_func(4.06)
+            final_state = np.dot(np.dot(swap_with_theta, state_after_cr), swap_with_theta.T.conj())
+
+            st.session_state.level4_final_state_rho = final_state
+            st.session_state.level4_final_state_rho1 = rho_1(final_state)
+            st.session_state.level4_final_state_rho2 = rho_2(final_state)
+            st.session_state.level4_final_bloch_vector1 = bloch_vector(st.session_state.level4_final_state_rho1)
+            st.session_state.level4_final_bloch_vector2 = bloch_vector(st.session_state.level4_final_state_rho2)
+
+        # Add custom CSS for story display
+        st.markdown("""
+        <style>
+        .story-container {
+            background-color: rgba(20, 20, 60, 0.8);
+            color: #f0e6ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #4d79ff;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: 0 0 15px rgba(77, 121, 255, 0.5);
+        }
+        .gate-info {
+            background-color: rgba(40, 10, 70, 0.7);
+            color: #f0e6ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #9966ff;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: 0 0 15px rgba(153, 102, 255, 0.5);
+        }
+        .translucent-container {
+            background-color: rgba(240, 240, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Content area
+        if st.session_state.level4_story_index < len(st.session_state.level4_story_content):
+            # Show story
+            st.markdown(f"""
+            <div class="story-container">
+                <p style="font-size: 1.1em; line-height: 1.5;">{st.session_state.level4_story_content[st.session_state.level4_story_index]}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Continue button
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.button("Continue", key="level4_story_next"):
+                    st.session_state.level4_story_index += 1
+                    st.rerun()
+        else:
+            # After story is complete, show the entangled qubits interface
+
+            # Display gate information
+            st.markdown("""
+            <div class="gate-info">
+                <h3>Entanglement Gates</h3>
+                <p>Use these special gates to manipulate the entangled qubits:</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Display the mathematical forms of the gates
+            st.latex(r'''
+            \text{CNOT} = 
+            \begin{pmatrix} 
+            1 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0 \\
+            0 & 0 & 0 & 1 \\
+            0 & 0 & 1 & 0
+            \end{pmatrix}
+            \quad
+            \text{PSWAP}(\phi) = 
+            \begin{pmatrix} 
+            1 & 0 & 0 & 0 \\
+            0 & 0 & e^{i\phi} & 0 \\
+            0 & e^{i\phi} & 0 & 0 \\
+            0 & 0 & 0 & 1
+            \end{pmatrix}
+            \quad
+            \text{CR}(\theta) = 
+            \begin{pmatrix} 
+            1 & 0 & 0 & 0 \\
+            0 & 1 & 0 & 0 \\
+            0 & 0 & 1 & 0 \\
+            0 & 0 & 0 & e^{i\theta}
+            \end{pmatrix}
+            ''')
+
+            # Create layout for the two qubits
+            col1, col2, col3, col4 = st.columns([1, 5, 5, 1])
+
+            with col2:
+                st.header("Your Qubit")
+
+                # Create placeholders for visualizations
+                bloch_placeholder1 = st.empty()
+                rho_placeholder1 = st.empty()
+
+                # Display Bloch sphere for first qubit
+                current_bloch_vector1 = bloch_vector(st.session_state.level4_state_rho1)
+                with bloch_placeholder1:
+                    plot_bloch_sphere(current_bloch_vector1, st.session_state.level4_final_bloch_vector1, 'blues',
+                                      "Your Quantum State")
+
+                # Gates for the first qubit
+                st.write("### Apply Gates:")
+                st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+                # Single qubit controls
+                subcol1, subcol2 = st.columns(2)
+                with subcol1:
+                    x_button1 = st.button('X Gate', key="x_gate_1")
+                    y_button1 = st.button('Y Gate', key="y_gate_1")
+                    z_button1 = st.button('Z Gate', key="z_gate_1")
+
+                with subcol2:
+                    # Two-qubit gates
+                    cnot_button1 = st.button('CNOT', key="cnot_gate_1")
+
+                    pswap_theta1 = st.slider('PSWAP φ (radians)',
+                                             min_value=0.0, max_value=2 * np.pi,
+                                             value=np.pi / 2, step=0.01, key="pswap_slider_1")
+                    pswap_button1 = st.button('PSWAP', key="pswap_gate_1")
+
+                    cr_theta1 = st.slider('CR θ (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="cr_slider_1")
+                    cr_button1 = st.button('CR', key="cr_gate_1")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # Display density matrix
+                with rho_placeholder1:
+                    display_rho(st.session_state.level4_state_rho1)
+
+            with col3:
+                st.header("Sonalika's Qubit")
+
+                # Create placeholders for visualizations
+                bloch_placeholder2 = st.empty()
+                rho_placeholder2 = st.empty()
+
+                # Display Bloch sphere for second qubit
+                current_bloch_vector2 = bloch_vector(st.session_state.level4_state_rho2)
+                with bloch_placeholder2:
+                    plot_bloch_sphere(current_bloch_vector2, st.session_state.level4_final_bloch_vector2, 'purples',
+                                      "Sonalika's Quantum State")
+
+                # Gates for the second qubit
+                st.write("### Apply Gates:")
+                st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+                # Single qubit controls
+                subcol1, subcol2 = st.columns(2)
+                with subcol1:
+                    x_button2 = st.button('X Gate', key="x_gate_2")
+                    y_button2 = st.button('Y Gate', key="y_gate_2")
+                    z_button2 = st.button('Z Gate', key="z_gate_2")
+
+                with subcol2:
+                    # Two-qubit gates
+                    cnot_button2 = st.button('CNOT', key="cnot_gate_2")
+
+                    pswap_theta2 = st.slider('PSWAP φ (radians)',
+                                             min_value=0.0, max_value=2 * np.pi,
+                                             value=np.pi / 2, step=0.01, key="pswap_slider_2")
+                    pswap_button2 = st.button('PSWAP', key="pswap_gate_2")
+
+                    cr_theta2 = st.slider('CR θ (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="cr_slider_2")
+                    cr_button2 = st.button('CR', key="cr_gate_2")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # Display density matrix
+                with rho_placeholder2:
+                    display_rho(st.session_state.level4_state_rho2)
+
+            # Extract timeline-based gate histories for visualization
+            gate_history_q1 = []
+            gate_history_q2 = []
+
+            if len(st.session_state.level4_combined_gate_history) > 0:
+                # Sort by time step to ensure proper order
+                sorted_history = sorted(st.session_state.level4_combined_gate_history, key=lambda x: x[0])
+
+                # Get the maximum time step
+                max_time = sorted_history[-1][0] + 1
+
+                # Initialize empty histories with None placeholders for each time step
+                gate_history_q1 = [None] * max_time
+                gate_history_q2 = [None] * max_time
+
+                # Fill in gates at appropriate time steps
+                for time, qubit, gate in sorted_history:
+                    if qubit == 1:
+                        gate_history_q1[time] = gate
+                    elif qubit == 2:
+                        gate_history_q2[time] = gate
+                    elif qubit == "both":  # For two-qubit gates that affect both
+                        gate_history_q1[time] = gate
+                        gate_history_q2[time] = gate
+
+                # Remove None values
+                gate_history_q1 = [g for g in gate_history_q1 if g is not None]
+                gate_history_q2 = [g for g in gate_history_q2 if g is not None]
+
+            # Process button clicks for Qubit 1
+            if x_button1:
+                gate = pauli_x()
+                st.session_state.level4_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level4_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level4_combined_gate_history.append((st.session_state.level4_time_step, 1, 'X'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif y_button1:
+                gate = pauli_y()
+                st.session_state.level4_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level4_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level4_combined_gate_history.append((st.session_state.level4_time_step, 1, 'Y'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif z_button1:
+                gate = pauli_z()
+                st.session_state.level4_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level4_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level4_combined_gate_history.append((st.session_state.level4_time_step, 1, 'Z'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif cnot_button1:
+                gate = cnot_gate()
+                st.session_state.level4_state_rho = np.dot(np.dot(gate, st.session_state.level4_state_rho), gate.T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level4_combined_gate_history.append(
+                    (st.session_state.level4_time_step, "both", 'CNOT'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif pswap_button1:
+                gate = pswap_gate(pswap_theta1)
+                st.session_state.level4_state_rho = np.dot(np.dot(gate, st.session_state.level4_state_rho),
+                                                           gate.conj().T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level4_combined_gate_history.append(
+                    (st.session_state.level4_time_step, "both", f'PSWAP({pswap_theta1:.2f})'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif cr_button1:
+                gate = cr_gate(cr_theta1)
+                st.session_state.level4_state_rho = gate @ st.session_state.level4_state_rho @ gate.conj().T
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level4_combined_gate_history.append(
+                    (st.session_state.level4_time_step, "both", f'CR({cr_theta1:.2f})'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            # Process button clicks for Qubit 2
+            elif x_button2:
+                gate = pauli_x()
+                st.session_state.level4_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level4_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level4_combined_gate_history.append((st.session_state.level4_time_step, 2, 'X'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif y_button2:
+                gate = pauli_y()
+                st.session_state.level4_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level4_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level4_combined_gate_history.append((st.session_state.level4_time_step, 2, 'Y'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif z_button2:
+                gate = pauli_z()
+                st.session_state.level4_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level4_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level4_combined_gate_history.append((st.session_state.level4_time_step, 2, 'Z'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif cnot_button2:
+                gate = cnot_gate()
+                st.session_state.level4_state_rho = np.dot(np.dot(gate, st.session_state.level4_state_rho), gate.T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level4_combined_gate_history.append(
+                    (st.session_state.level4_time_step, "both", 'CNOT'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+            elif pswap_button2:
+                gate = pswap_gate(pswap_theta2)
+                st.session_state.level4_state_rho = np.dot(np.dot(gate, st.session_state.level4_state_rho),
+                                                           gate.conj().T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level4_combined_gate_history.append(
+                    (st.session_state.level4_time_step, "both", f'PSWAP({pswap_theta2:.2f})'))
+                st.session_state.level4_time_step += 1
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+                st.rerun()
+
+
+            elif cr_button2:
+
+                gate = cr_gate(cr_theta2)
+
+                st.session_state.level4_state_rho = gate @ st.session_state.level4_state_rho @ gate.conj().T
+
+                # Record gate in the combined history with time step (affects both qubits)
+
+                st.session_state.level4_combined_gate_history.append(
+                    (st.session_state.level4_time_step, "both", f'CR({cr_theta2:.2f})'))
+
+                st.session_state.level4_time_step += 1
+
+                st.session_state.level4_state_rho1 = rho_1(st.session_state.level4_state_rho)
+
+                st.session_state.level4_state_rho2 = rho_2(st.session_state.level4_state_rho)
+
+                st.rerun()
+
+                # Display circuit history
+
+            st.markdown("### Two-Qubit Circuit History")
+
+            # Create accurate circuit visualization based on the combined history
+
+            max_time = st.session_state.level4_time_step
+
+            if max_time > 0:
+
+                # Sort history by time
+
+                sorted_history = sorted(st.session_state.level4_combined_gate_history, key=lambda x: x[0])
+
+                # Create the circuit figure
+
+                circuit_fig = go.Figure()
+
+                # Add qubit wires (length based on the number of time steps)
+
+                circuit_fig.add_trace(go.Scatter(
+
+                    x=[0, max_time],
+
+                    y=[1, 1],
+
+                    mode="lines",
+
+                    line=dict(width=3, color="black"),
+
+                    name="Your Qubit"
+
+                ))
+
+                circuit_fig.add_trace(go.Scatter(
+
+                    x=[0, max_time],
+
+                    y=[0, 0],
+
+                    mode="lines",
+
+                    line=dict(width=3, color="black"),
+
+                    name="Sonalika's Qubit"
+
+                ))
+
+                # Add labels for the qubits
+
+                circuit_fig.add_annotation(
+
+                    x=-0.5, y=1,
+
+                    text="Your Qubit",
+
+                    showarrow=False,
+
+                    font=dict(size=14, color="black")
+
+                )
+
+                circuit_fig.add_annotation(
+
+                    x=-0.5, y=0,
+
+                    text="Sonalika",
+
+                    showarrow=False,
+
+                    font=dict(size=14, color="black")
+
+                )
+
+                # Add gates at appropriate positions
+
+                for time_step, qubit, gate_name in sorted_history:
+
+                    if qubit == 1 or qubit == "both":
+                        # Add gate for qubit 1
+
+                        circuit_fig.add_trace(go.Scatter(
+
+                            x=[time_step], y=[1],
+
+                            mode="markers+text",
+
+                            marker=dict(symbol="square", size=40, color="pink"),
+
+                            text=[gate_name],
+
+                            textposition='middle center',
+
+                            name=f"Gate at t={time_step}"
+
+                        ))
+
+                    if qubit == 2 or qubit == "both":
+                        # Add gate for qubit 2
+
+                        circuit_fig.add_trace(go.Scatter(
+
+                            x=[time_step], y=[0],
+
+                            mode="markers+text",
+
+                            marker=dict(symbol="square", size=40, color="skyblue"),
+
+                            text=[gate_name],
+
+                            textposition='middle center',
+
+                            name=f"Gate at t={time_step}"
+
+                        ))
+
+                    # If it's a two-qubit gate, draw a line connecting the qubits
+
+                    if qubit == "both":
+                        circuit_fig.add_trace(go.Scatter(
+
+                            x=[time_step, time_step],
+
+                            y=[0, 1],
+
+                            mode="lines",
+
+                            line=dict(width=2, color="purple", dash="dot"),
+
+                            name=f"Connection at t={time_step}"
+
+                        ))
+
+                # Update layout
+
+                circuit_fig.update_layout(
+
+                    xaxis=dict(range=[-1, max_time + 0.5], zeroline=False, showticklabels=True, title="Time Step"),
+
+                    yaxis=dict(range=[-0.5, 1.5], zeroline=False, showticklabels=False),
+
+                    margin=dict(l=30, r=30, b=30, t=30),
+
+                    height=250,
+
+                    width=700,
+
+                    showlegend=False,
+
+                    title="Two-Qubit Circuit History"
+
+                )
+
+                # Display the circuit
+
+                st.plotly_chart(circuit_fig, key=f"two_qubit_circuit_{max_time}")
+
+                # Show gate history as text for reference
+
+                st.write("Gate sequence:")
+
+                for time_step, qubit, gate_name in sorted_history:
+
+                    if qubit == "both":
+
+                        qubit_text = "Both qubits"
+
+                    elif qubit == 1:
+
+                        qubit_text = "Your qubit"
+
+                    else:
+
+                        qubit_text = "Sonalika's qubit"
+
+                    st.write(f"Step {time_step}: {gate_name} on {qubit_text}")
+
+            else:
+
+                st.write("No gates applied yet. Apply gates to see the circuit history.")
+
+            # Check if target state is reached (approx)
+
+            target_vector1 = st.session_state.level4_final_bloch_vector1
+
+            target_vector2 = st.session_state.level4_final_bloch_vector2
+
+            current_vector1 = bloch_vector(st.session_state.level4_state_rho1)
+
+            current_vector2 = bloch_vector(st.session_state.level4_state_rho2)
+
+            distance1 = np.linalg.norm(target_vector1 - current_vector1)
+
+            distance2 = np.linalg.norm(target_vector2 - current_vector2)
+
+            # Level completion
+
+            if distance1 < 0.1 and distance2 < 0.1:
+                st.balloons()
+
+                st.success(
+                    "You've successfully coordinated with Sonalika to reach the target state! The entangled Bloch spheres begin to separate...")
+
+            # Show how close they are to solution
+
+            st.progress(max(0, 1.0 - (distance1 + distance2) / 2))
+
+            score = 0
+
+            if distance1 < 0.1 and distance2 < 0.1 or st.button("Click when done!"):
+                score = 50
+
+            if level(score):
+                level_transition()
+
+            st.button("Take me to next level")
+
+    elif st.session_state.current_level == 5:
+        st.header("Level 5: Quantum Rotation Masters")
+
+        # Define the rho functions for reduced density matrices
+        def rho_1(rho_2qubit):
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
+                             [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
+
+        def rho_2(rho_2qubit):
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[2, 2], rho_2qubit[0, 1] + rho_2qubit[2, 3]],
+                             [rho_2qubit[1, 0] + rho_2qubit[3, 2], rho_2qubit[1, 1] + rho_2qubit[3, 3]]])
+
+        # Story initialization
+        if 'level5_story_index' not in st.session_state:
+            st.session_state.level5_story_index = 0
+            st.session_state.level5_story_content = [
+                "You input the final sequence of gates, and the door on the Bloch sphere slides open with a resonant hum. Relief washes over your quantum state as you rush through the opening.",
+
+                "But something isn't right. As your consciousness settles, you realize you're still in a Bloch sphere—just a different one. And there, across the curved quantum landscape, is Sonalika, your friend who disappeared a week before you did. Their quantum signature flickers with recognition when they see you.",
+
+                "\"Impressive progress,\" it says, \"but did you really think escape would be so simple? You and your friend are now trapped in entangled Bloch spheres.... \"In this realm, the single qubit gates are too simplistic. Now, you must harness the power of entanglement and multi-qubit gates.\"",
+
+                "\"You made it!\" Sonalika calls out, their voice carrying across the quantum void. \"I've been waiting for—\" They stop mid-sentence as both of you suddenly lurch sideways. When you shifted your position, Sonalika moved too—perfectly mirroring your rotation but in the opposite direction.",
+
+                "You try to move toward Sonalika, but the more you struggle to approach, the further they seem to drift away. When you rotate clockwise, they rotate counterclockwise. When you try to shift your phase, theirs shifts in complementary patterns.",
+
+                "\"The only way out,\" the voice continues, \"is to master the gates of entanglement. The PSWAP to exchange your positions, the CNOT to flip states conditionally, and the CR for controlled rotations. Only by working together can you break free of this quantum prison.\"",
+
+                "Sonalika looks at you with determination in their eyes. \"We can figure this out,\" they say. After all, rotation gates are universal—they can create any single-qubit transformation with the right sequence and parameters. But we'll need to coordinate our actions perfectly. When I apply my gate, you'll need to apply yours at exactly the right moment.\"",
+
+                "You notice three new controls have appeared on your quantum interface: PSWAP, CNOT, and CR, each with parameters that need precise calibration. A wrong move could entangle you both more deeply, perhaps irreversibly.",
+
+                "\"Ready to try?\" Sonalika asks, hovering a finger over their control panel. The true test has only just begun."
+                
+                "The challenge is clear: use rotation gates with the right parameters, along with two-qubit entangling operations, to reach the target state that will finally unlock your escape from this quantum puzzle."
+            ]
+
+        def cnot_gate_q1_controls_q2():
+            # CNOT where qubit 1 controls qubit 2
+            return np.array([[1, 0, 0, 0],
+                             [0, 1, 0, 0],
+                             [0, 0, 0, 1],
+                             [0, 0, 1, 0]])
+
+        def cnot_gate_q2_controls_q1():
+            # CNOT where qubit 2 controls qubit 1
+            return np.array([[1, 0, 0, 0],
+                             [0, 0, 0, 1],
+                             [0, 0, 1, 0],
+                             [0, 1, 0, 0]])
+
+        def cr_gate_q1_controls_q2(theta):
+            # CR where qubit 1 controls qubit 2
+            return np.array([[1, 0, 0, 0],
+                             [0, 1, 0, 0],
+                             [0, 0, 1, 0],
+                             [0, 0, 0, np.exp(1j * theta)]])
+
+        def cr_gate_q2_controls_q1(theta):
+            # CR where qubit 2 controls qubit 1
+            return np.array([[1, 0, 0, 0],
+                             [0, 1, 0, 0],
+                             [0, 0, np.exp(1j * theta), 0],
+                             [0, 0, 0, 1]])
+
+        # Initialize state if not already done
+        rho_2qubit_initial = two_qubit_swap_state(0.25, 0.35, np.pi / 4, 0.15)
+
+        if 'level5_initial_state_rho' not in st.session_state:
+            st.session_state.level5_initial_state_rho = rho_2qubit_initial
+            st.session_state.level5_initial_state_rho1 = rho_1(rho_2qubit_initial)
+            st.session_state.level5_initial_state_rho2 = rho_2(rho_2qubit_initial)
+            st.session_state.level5_state_rho = rho_2qubit_initial
+            st.session_state.level5_state_rho1 = rho_1(rho_2qubit_initial)
+            st.session_state.level5_state_rho2 = rho_2(rho_2qubit_initial)
+
+            # Initialize combined gate history - each entry is a tuple (time_step, qubit, gate_name)
+            st.session_state.level5_combined_gate_history = []
+            st.session_state.level5_time_step = 0
+
+            # Define target state
+            # Add these functions to handle different control directions
+
+
+            # Function for parameterized swap gate
+            swap_gate_func = lambda theta: np.array([
+                [1, 0, 0, 0],
+                [0, np.cos(theta), 1j * np.sin(theta), 0],
+                [0, 1j * np.sin(theta), np.cos(theta), 0],
+                [0, 0, 0, 1]
+            ])
+
+            # Calculate target state by applying gates
+            # Update the target state generation
+            state_after_not = np.dot(np.dot(cnot_gate_q1_controls_q2(), rho_2qubit_initial),
+                                     cnot_gate_q1_controls_q2().T)
+            cr_with_theta = cr_gate_q2_controls_q1(3.5)
+            state_after_cr = np.dot(np.dot(cr_with_theta, state_after_not), cr_with_theta.T.conj())
+            swap_with_theta = swap_gate_func(4.2)
+            final_state = np.dot(np.dot(swap_with_theta, state_after_cr), swap_with_theta.T.conj())
+
+            st.session_state.level5_final_state_rho = final_state
+            st.session_state.level5_final_state_rho1 = rho_1(final_state)
+            st.session_state.level5_final_state_rho2 = rho_2(final_state)
+            st.session_state.level5_final_bloch_vector1 = bloch_vector(st.session_state.level5_final_state_rho1)
+            st.session_state.level5_final_bloch_vector2 = bloch_vector(st.session_state.level5_final_state_rho2)
+
+        # Add custom CSS for story display
+        st.markdown("""
+        <style>
+        .story-container {
+            background-color: rgba(20, 20, 60, 0.8);
+            color: #f0e6ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #4d79ff;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: 0 0 15px rgba(77, 121, 255, 0.5);
+        }
+        .gate-info {
+            background-color: rgba(20, 10, 70, 0.7);
+            color: #f0e6ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 2px solid #9966ff;
+            font-family: 'Share Tech Mono', monospace;
+            box-shadow: 0 0 15px rgba(153, 102, 255, 0.5);
+        }
+        .translucent-container {
+            background-color: rgba(240, 240, 255, 0.2);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
+        # Content area
+        if st.session_state.level5_story_index < len(st.session_state.level5_story_content):
+            # Show story
+            st.markdown(f"""
+            <div class="story-container">
+                <p style="font-size: 1.1em; line-height: 1.5;">{st.session_state.level5_story_content[st.session_state.level5_story_index]}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            st.latex(r'''
+                        R_y(\theta) = 
+                        \begin{pmatrix} 
+                        \cos(\theta/2) & -\sin(\theta/2) \\
+                        \sin(\theta/2) & \cos(\theta/2)
+                        \end{pmatrix}
+                        \quad
+                        R_z(\phi) = 
+                        \begin{pmatrix} 
+                        e^{-i\phi/2} & 0 \\
+                        0 & e^{i\phi/2}
+                        \end{pmatrix}
+                        \quad
+                        \text{Phase}(\delta) = 
+                        \begin{pmatrix} 
+                        1 & 0 \\
+                        0 & e^{i\delta}
+                        \end{pmatrix}
+                        ''')
+
+            st.latex(r'''
+                        \text{CNOT} = 
+                        \begin{pmatrix} 
+                        1 & 0 & 0 & 0 \\
+                        0 & 1 & 0 & 0 \\
+                        0 & 0 & 0 & 1 \\
+                        0 & 0 & 1 & 0
+                        \end{pmatrix}
+                        \quad
+                        \text{PSWAP}(\phi) = 
+                        \begin{pmatrix} 
+                        1 & 0 & 0 & 0 \\
+                        0 & \cos(\phi) & i\sin(\phi) & 0 \\
+                        0 & i\sin(\phi) & \cos(\phi) & 0 \\
+                        0 & 0 & 0 & 1
+                        \end{pmatrix}
+                        \quad
+                        \text{CR}(\theta) = 
+                        \begin{pmatrix} 
+                        1 & 0 & 0 & 0 \\
+                        0 & 1 & 0 & 0 \\
+                        0 & 0 & 1 & 0 \\
+                        0 & 0 & 0 & e^{i\theta}
+                        \end{pmatrix}
+                        ''')
+
+            # Continue button
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.button("Continue", key="level5_story_next"):
+                    st.session_state.level5_story_index += 1
+                    st.rerun()
+        else:
+            # After story is complete, show the entangled qubits interface
+
+            # Display gate information
+            st.markdown("""
+            <div class="gate-info">
+                <h3>Rotation & Entanglement Gates</h3>
+                <p>Use rotation gates for single-qubit operations and entangling gates for two-qubit operations:</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # Display the mathematical forms of the gates
+
+
+            # Create layout for the two qubits
+            col1, col2, col3, col4 = st.columns([1, 10, 10, 1])
+
+            with col2:
+                st.header("Your Qubit")
+
+                # Create placeholders for visualizations
+                bloch_placeholder1 = st.empty()
+                rho_placeholder1 = st.empty()
+
+                # Display Bloch sphere for first qubit
+                current_bloch_vector1 = bloch_vector(st.session_state.level5_state_rho1)
+                with bloch_placeholder1:
+                    plot_bloch_sphere(current_bloch_vector1, st.session_state.level5_final_bloch_vector1, 'blues',
+                                      "Your Quantum State")
+
+                # Gates for the first qubit
+                st.write("### Apply Gates:")
+                st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+                # Single qubit controls
+                subcol1, subcol2 = st.columns(2)
+                with subcol1:
+                    # Y-Rotation Gate
+                    ry_angle1 = st.slider('Ry angle (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="ry_slider_1")
+                    ry_button1 = st.button('Ry', key="ry_gate_1")
+
+                    # Z-Rotation Gate
+                    rz_angle1 = st.slider('Rz angle (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="rz_slider_1")
+                    rz_button1 = st.button('Rz', key="rz_gate_1")
+
+                    # Phase Shift Gate
+                    phase_angle1 = st.slider('Phase angle (radians)',
+                                             min_value=0.0, max_value=2 * np.pi,
+                                             value=np.pi / 4, step=0.01, key="phase_slider_1")
+                    phase_button1 = st.button('Phase shift', key="phase_gate_1")
+
+                with subcol2:
+                    # Two-qubit gates
+                    cnot_button1 = st.button('CNOT', key="cnot_gate_1")
+
+                    pswap_theta1 = st.slider('PSWAP φ (radians)',
+                                             min_value=0.0, max_value=2 * np.pi,
+                                             value=np.pi / 2, step=0.01, key="pswap_slider_1")
+                    pswap_button1 = st.button('PSWAP', key="pswap_gate_1")
+
+                    cr_theta1 = st.slider('CR θ (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="cr_slider_1")
+                    cr_button1 = st.button('CR', key="cr_gate_1")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # Display density matrix
+                with rho_placeholder1:
+                    display_rho(st.session_state.level5_state_rho1)
+
+            with col3:
+                st.header("Sonalika's Qubit")
+
+                # Create placeholders for visualizations
+                bloch_placeholder2 = st.empty()
+                rho_placeholder2 = st.empty()
+
+                # Display Bloch sphere for second qubit
+                current_bloch_vector2 = bloch_vector(st.session_state.level5_state_rho2)
+                with bloch_placeholder2:
+                    plot_bloch_sphere(current_bloch_vector2, st.session_state.level5_final_bloch_vector2, 'purples',
+                                      "Sonalika's Quantum State")
+
+                # Gates for the second qubit
+                st.write("### Apply Gates:")
+                st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+                # Single qubit controls
+                subcol1, subcol2 = st.columns(2)
+                with subcol1:
+                    # Y-Rotation Gate
+                    ry_angle2 = st.slider('Ry angle (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01,key="ry_slider_2")
+                    ry_button2 = st.button('Ry', key="ry_gate_2")
+
+                    # Z-Rotation Gate
+                    rz_angle2 = st.slider('Rz angle (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="rz_slider_2")
+                    rz_button2 = st.button('Rz', key="rz_gate_2")
+
+                    # Phase Shift Gate
+                    phase_angle2 = st.slider('Phase angle (radians)',
+                                             min_value=0.0, max_value=2 * np.pi,
+                                             value=np.pi / 4, step=0.01, key="phase_slider_2")
+                    phase_button2 = st.button('Phase shift', key="phase_gate_2")
+
+                with subcol2:
+                    # Two-qubit gates
+                    cnot_button2 = st.button('CNOT', key="cnot_gate_2")
+
+                    pswap_theta2 = st.slider('PSWAP φ (radians)',
+                                             min_value=0.0, max_value=2 * np.pi,
+                                             value=np.pi / 2, step=0.01, key="pswap_slider_2")
+                    pswap_button2 = st.button('PSWAP', key="pswap_gate_2")
+
+                    cr_theta2 = st.slider('CR θ (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="cr_slider_2")
+                    cr_button2 = st.button('CR', key="cr_gate_2")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # Display density matrix
+                with rho_placeholder2:
+                    display_rho(st.session_state.level5_state_rho2)
+
+            # Extract timeline-based gate histories for visualization
+            gate_history_q1 = []
+            gate_history_q2 = []
+
+            if len(st.session_state.level5_combined_gate_history) > 0:
+                # Sort by time step to ensure proper order
+                sorted_history = sorted(st.session_state.level5_combined_gate_history, key=lambda x: x[0])
+
+                # Get the maximum time step
+                max_time = sorted_history[-1][0] + 1
+
+                # Initialize empty histories with None placeholders for each time step
+                gate_history_q1 = [None] * max_time
+                gate_history_q2 = [None] * max_time
+
+                # Fill in gates at appropriate time steps
+                for time, qubit, gate in sorted_history:
+                    if qubit == 1:
+                        gate_history_q1[time] = gate
+                    elif qubit == 2:
+                        gate_history_q2[time] = gate
+                    elif qubit == "both":  # For two-qubit gates that affect both
+                        gate_history_q1[time] = gate
+                        gate_history_q2[time] = gate
+
+                # Remove None values
+                gate_history_q1 = [g for g in gate_history_q1 if g is not None]
+                gate_history_q2 = [g for g in gate_history_q2 if g is not None]
+
+            # Process button clicks for Qubit 1
+            if ry_button1:
+                # Y-rotation gate
+                gate = np.array([
+                    [np.cos(ry_angle1 / 2), -np.sin(ry_angle1 / 2)],
+                    [np.sin(ry_angle1 / 2), np.cos(ry_angle1 / 2)]
+                ])
+                st.session_state.level5_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level5_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, 1, f'Ry({ry_angle1:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif rz_button1:
+                # Z-rotation gate
+                gate = np.array([
+                    [np.exp(-1j * rz_angle1 / 2), 0],
+                    [0, np.exp(1j * rz_angle1 / 2)]
+                ])
+                st.session_state.level5_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level5_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, 1, f'Rz({rz_angle1:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif phase_button1:
+                # Phase shift gate
+                gate = np.array([
+                    [1, 0],
+                    [0, np.exp(1j * phase_angle1)]
+                ])
+                st.session_state.level5_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level5_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, 1, f'Phase({phase_angle1:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+
+            elif cnot_button1:
+
+                gate = cnot_gate_q1_controls_q2()  # Qubit 1 controls qubit 2
+
+                st.session_state.level5_state_rho = np.dot(np.dot(gate, st.session_state.level5_state_rho), gate.T)
+
+                # Record gate in the combined history with time step (affects both qubits)
+
+                st.session_state.level5_combined_gate_history.append(
+
+                    (st.session_state.level5_time_step, "both", 'CNOT (Q1→Q2)'))
+
+                st.session_state.level5_time_step += 1
+
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+
+                st.rerun()
+
+            elif pswap_button1:
+                gate = pswap_gate(pswap_theta1)
+                st.session_state.level5_state_rho = np.dot(np.dot(gate, st.session_state.level5_state_rho),
+                                                           gate.conj().T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, "both", f'PSWAP({pswap_theta1:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+
+            elif cr_button1:
+
+                gate = cr_gate_q1_controls_q2(cr_theta1)  # Qubit 1 controls qubit 2
+
+                st.session_state.level5_state_rho = gate @ st.session_state.level5_state_rho @ gate.conj().T
+
+                # Record gate in the combined history with time step (affects both qubits)
+
+                st.session_state.level5_combined_gate_history.append(
+
+                    (st.session_state.level5_time_step, "both", f'CR({cr_theta1:.2f}) (Q1→Q2)'))
+
+                st.session_state.level5_time_step += 1
+
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+
+                st.rerun()
+
+            # Process button clicks for Qubit 2
+            elif ry_button2:
+                # Y-rotation gate
+                gate = np.array([
+                    [np.cos(ry_angle2 / 2), -np.sin(ry_angle2 / 2)],
+                    [np.sin(ry_angle2 / 2), np.cos(ry_angle2 / 2)]
+                ])
+                st.session_state.level5_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level5_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, 2, f'Ry({ry_angle2:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif rz_button2:
+                # Z-rotation gate
+                gate = np.array([
+                    [np.exp(-1j * rz_angle2 / 2), 0],
+                    [0, np.exp(1j * rz_angle2 / 2)]
+                ])
+                st.session_state.level5_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level5_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, 2, f'Rz({rz_angle2:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif phase_button2:
+                # Phase shift gate
+                gate = np.array([
+                    [1, 0],
+                    [0, np.exp(1j * phase_angle2)]
+                ])
+                st.session_state.level5_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level5_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, 2, f'Phase({phase_angle2:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+
+            elif cnot_button2:
+
+                gate = cnot_gate_q2_controls_q1()  # Qubit 2 controls qubit 1
+
+                st.session_state.level5_state_rho = np.dot(np.dot(gate, st.session_state.level5_state_rho), gate.T)
+
+                # Record gate in the combined history with time step (affects both qubits)
+
+                st.session_state.level5_combined_gate_history.append(
+
+                    (st.session_state.level5_time_step, "both", 'CNOT (Q2→Q1)'))
+
+                st.session_state.level5_time_step += 1
+
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+
+                st.rerun()
+
+            elif pswap_button2:
+                gate = pswap_gate(pswap_theta2)
+                st.session_state.level5_state_rho = np.dot(np.dot(gate, st.session_state.level5_state_rho),
+                                                           gate.conj().T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, "both", f'PSWAP({pswap_theta2:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+
+            elif cr_button2:
+
+                gate = cr_gate_q2_controls_q1(cr_theta2)  # Qubit 2 controls qubit 1
+
+                st.session_state.level5_state_rho = gate @ st.session_state.level5_state_rho @ gate.conj().T
+
+                # Record gate in the combined history with time step (affects both qubits)
+
+                st.session_state.level5_combined_gate_history.append(
+
+                    (st.session_state.level5_time_step, "both", f'CR({cr_theta2:.2f}) (Q2→Q1)'))
+
+                st.session_state.level5_time_step += 1
+
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+
+                st.rerun()
+
+            # Display circuit history
+            st.markdown("### Two-Qubit Circuit History")
+
+            # Create accurate circuit visualization based on the combined history
+            # Create accurate circuit visualization based on the combined history
+            max_time = st.session_state.level5_time_step
+
+            if max_time > 0:
+                # Sort history by time
+                sorted_history = sorted(st.session_state.level5_combined_gate_history, key=lambda x: x[0])
+
+                # Create the circuit figure
+                circuit_fig = go.Figure()
+
+                # Add qubit wires (length based on the number of time steps)
+                circuit_fig.add_trace(go.Scatter(
+                    x=[0, max_time],
+                    y=[1, 1],
+                    mode="lines",
+                    line=dict(width=3, color="black"),
+                    name="Your Qubit"
+                ))
+
+                circuit_fig.add_trace(go.Scatter(
+                    x=[0, max_time],
+                    y=[0, 0],
+                    mode="lines",
+                    line=dict(width=3, color="black"),
+                    name="Sonalika's Qubit"
+                ))
+
+                # Add labels for the qubits
+                circuit_fig.add_annotation(
+                    x=-0.5, y=1,
+                    text="Your Qubit",
+                    showarrow=False,
+                    font=dict(size=14, color="black")
+                )
+
+                circuit_fig.add_annotation(
+                    x=-0.5, y=0,
+                    text="Sonalika",
+                    showarrow=False,
+                    font=dict(size=14, color="black")
+                )
+
+                # Add gates at appropriate positions
+                for time_step, qubit, gate_name in sorted_history:
+                    if qubit == 1 or qubit == "both":
+                        # Add gate for qubit 1
+                        circuit_fig.add_trace(go.Scatter(
+                            x=[time_step], y=[1],
+                            mode="markers+text",
+                            marker=dict(symbol="square", size=40, color="pink"),
+                            text=[gate_name],
+                            textposition='middle center',
+                            #name=f"Gate at t={time_step}"
+                        ))
+
+                    if qubit == 2 or qubit == "both":
+                        # Add gate for qubit 2
+                        circuit_fig.add_trace(go.Scatter(
+                            x=[time_step], y=[0],
+                            mode="markers+text",
+                            marker=dict(symbol="square", size=40, color="skyblue"),
+                            text=[gate_name],
+                            textposition='middle center',
+                            #name=f"Gate at t={time_step}"
+                        ))
+
+                    # If it's a two-qubit gate, draw a line connecting the qubits
+                    if qubit == "both":
+                        circuit_fig.add_trace(go.Scatter(
+                            x=[time_step, time_step],
+                            y=[0, 1],
+                            mode="lines",
+                            line=dict(width=2, color="purple", dash="dot"),
+                            #name=f"Connection at t={time_step}"
+                        ))
+
+                # Update layout
+                circuit_fig.update_layout(
+                    xaxis=dict(range=[-1, max_time + 0.5], zeroline=False, showticklabels=True, title="Time Step"),
+                    yaxis=dict(range=[-0.5, 1.5], zeroline=False, showticklabels=False),
+                    margin=dict(l=30, r=30, b=30, t=30),
+                    height=250,
+                    width=700,
+                    showlegend=False,
+                    title="Two-Qubit Circuit History"
+                )
+
+                # Display the circuit
+                st.plotly_chart(circuit_fig, key=f"two_qubit_circuit_{max_time}")
+
+                # Show gate history as text for reference
+                st.write("Gate sequence:")
+                for time_step, qubit, gate_name in sorted_history:
+                    if qubit == "both":
+                        qubit_text = "Both qubits"
+                    elif qubit == 1:
+                        qubit_text = "Your qubit"
+                    else:
+                        qubit_text = "Sonalika's qubit"
+                    #st.write(f"Step {time_step}: {gate_name} on {qubit_text}")
+
+            else:
+                st.write("No gates applied yet. Apply gates to see the circuit history.")
+
+            # Check if target state is reached (approx)
+            target_vector1 = st.session_state.level5_final_bloch_vector1
+            target_vector2 = st.session_state.level5_final_bloch_vector2
+            current_vector1 = bloch_vector(st.session_state.level5_state_rho1)
+            current_vector2 = bloch_vector(st.session_state.level5_state_rho2)
+            distance1 = np.linalg.norm(target_vector1 - current_vector1)
+            distance2 = np.linalg.norm(target_vector2 - current_vector2)
+
+            # Display progress bar for each qubit
+            #st.subheader("Progress to Target States")
+
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("Your qubit's progress:")
+                progress1 = max(0, min(1.0, 1.0 - (distance1 / 2.0)))
+                st.progress(progress1)
+                st.write(f"Distance to target: {distance1:.6f}")
+
+                if progress1 > 0.9:
+                    st.success("Perfect! Your qubit is extremely close to the target state!")
+                elif progress1 > 0.8:
+                    st.info("Very close! Just a tiny adjustment needed for your qubit!")
+
+            with col2:
+                st.write("Sonalika's qubit's progress:")
+                progress2 = max(0, min(1.0, 1.0 - (distance2 / 2.0)))
+                st.progress(progress2)
+                st.write(f"Distance to target: {distance2:.6f}")
+
+                if progress2 > 0.9:
+                    st.success("Perfect! Sonalika's qubit is extremely close to the target state!")
+                elif progress2 > 0.8:
+                    st.info("Very close! Just a tiny adjustment needed for Sonalika's qubit!")
+
+            # Combined progress
+            st.write("Overall progress:")
+            combined_progress = max(0, min(1.0, 1.0 - (distance1 + distance2) / 4.0))
+            st.progress(combined_progress)
+
+            if combined_progress > 0.95:
+                st.success("Amazing! Both qubits are aligned perfectly with their targets!")
+            elif combined_progress > 0.9:
+                st.info("You're very close to completing the challenge!")
+            elif combined_progress > 0.75:
+                st.info("Making good progress! Keep adjusting the gates.")
+            elif combined_progress > 0.5:
+                st.warning("You're on the right track, but still have some way to go.")
+            else:
+                st.error("Still far from the target states. Try different rotation angles and gate combinations.")
+
+            # Level completion
+            if distance1 < 0.1 and distance2 < 0.1:
+                st.snow()
+                st.success(
+                    "You've successfully mastered the rotation gates and reached the target states! The quantum doors begin to glow with a bright light...")
+
+                # Add a hint for the solution sequence
+                with st.expander("Solution Sequence:"):
+                    st.write("""
+                            The target state can be reached with this sequence:
+                            1. CNOT
+                            2. CR(3.5) gate
+                            3. PSWAP(4.2) gate
+
+                            Combined with appropriate rotations on individual qubits:
+                            - For your qubit: Ry(π/3) followed by Rz(π/4)
+                            - For Sonalika's qubit: Phase(π/2) followed by Ry(π/6)
+                            """)
+
+            # Show how close they are to solution
+            score = 0
+            if distance1 < 0.1 and distance2 < 0.1 or st.button("Click when done!", key="level5_done"):
+                score = 50
+                if level(score):
+                    level_transition()
+
+            if st.button("Take me to next level", key="level5_next"):
+                st.session_state.current_level = 7
+                st.rerun()
+
+    elif st.session_state.current_level == 7:
+
+        st.header("Level 5: Maximally Entangled Spheres")
+
+        # Define the rho functions for reduced density matrices
+        def rho_1(rho_2qubit):
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
+                             [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
+
+        def rho_2(rho_2qubit):
+            return np.array([[rho_2qubit[0, 0] + rho_2qubit[2, 2], rho_2qubit[0, 1] + rho_2qubit[2, 3]],
+                             [rho_2qubit[1, 0] + rho_2qubit[3, 2], rho_2qubit[1, 1] + rho_2qubit[3, 3]]])
+
+        # Story initialization
+        if 'level5_story_index' not in st.session_state:
+            st.session_state.level5_story_index = 0
+            st.session_state.level5_story_content = [
+                "You input the final sequence of gates, and the door on the Bloch sphere slides open with a resonant hum. Relief washes over your quantum state as you rush through the opening, feeling your wavefunction expand beyond the confines of your spherical prison.",
+
+                "But something isn't right. As your consciousness settles, you realize you're still in a Bloch sphere—just a different one. And there, across the curved quantum landscape, is Sonalika, your friend who disappeared a week before you did. Their quantum signature flickers with recognition when they see you.",
+
+                "\"You made it!\" Sonalika calls out, their voice carrying across the quantum void. \"I've been waiting for—\" They stop mid-sentence as both of you suddenly lurch sideways. When you shifted your position, Sonalika moved too—perfectly mirroring your rotation but in the opposite direction.",
+
+                "The mysterious voice returns, now sounding amused. \"Congratulations on solving the first puzzle,\" it says. \"But did you really think escape would be so simple? You and your friend are now trapped in entangled Bloch spheres. Every action one takes affects the other.\"",
+
+                "You try to move toward Sonalika, but the more you struggle to approach, the further they seem to drift away. When you rotate clockwise, they rotate counterclockwise. When you try to shift your phase, theirs shifts in complementary patterns.",
+
+                "\"The only way out,\" the voice continues, \"is to master the gates of entanglement. The PSWAP to exchange your positions, the CNOT to flip states conditionally, and the CR for controlled rotations. Only by working together can you break free of this quantum prison.\"",
+
+                "Sonalika looks at you with determination in their eyes. \"We can figure this out,\" they say. \"But we'll need to coordinate our actions perfectly. When I apply my gate, you'll need to apply yours at exactly the right moment.\"",
+
+                "You notice three new controls have appeared on your quantum interface: PSWAP, CNOT, and CR, each with parameters that need precise calibration. A wrong move could entangle you both more deeply, perhaps irreversibly.",
+
+                "\"Ready to try?\" Sonalika asks, hovering a finger over their control panel. The true test has only just begun."
+            ]
+
+        # Initialize state if not already done
+        rho_2qubit_initial = bell_phi_minus
+
+        if 'level5_initial_state_rho' not in st.session_state:
+            st.session_state.level5_initial_state_rho = rho_2qubit_initial
+            st.session_state.level5_initial_state_rho1 = rho_1(rho_2qubit_initial)
+            st.session_state.level5_initial_state_rho2 = rho_2(rho_2qubit_initial)
+            st.session_state.level5_state_rho = rho_2qubit_initial
+            st.session_state.level5_state_rho1 = rho_1(rho_2qubit_initial)
+            st.session_state.level5_state_rho2 = rho_2(rho_2qubit_initial)
+
+            # Initialize combined gate history - each entry is a tuple (time_step, qubit, gate_name)
+            st.session_state.level5_combined_gate_history = []
+            st.session_state.level5_time_step = 0
+
+            # Define target state
+            not_gate = np.array([[1, 0, 0, 0],
+                                 [0, 1, 0, 0],
+                                 [0, 0, 0, 1],
+                                 [0, 0, 1, 0]])  # CNOT
+
+            # Function for controlled rotation gate
+            cr_gate_func = lambda theta: np.array([[1, 0, 0, 0],
+                                                   [0, 1, 0, 0],
+                                                   [0, 0, 1, 0],
+                                                   [0, 0, 0, np.exp(1j * theta)]])
+
+            # Function for parameterized swap gate
+            swap_gate_func = lambda theta: np.array([
+                [1, 0, 0, 0],
+                [0, np.cos(theta), 1j * np.sin(theta), 0],
+                [0, 1j * np.sin(theta), np.cos(theta), 0],
+                [0, 0, 0, 1]
+            ])
+
+            # Calculate target state by applying gates
+            state_after_not = np.dot(np.dot(not_gate, rho_2qubit_initial), not_gate.T)
+            cr_with_theta = cr_gate_func(3)
+            state_after_cr = np.dot(np.dot(cr_with_theta, state_after_not), cr_with_theta.T.conj())
+            swap_with_theta = swap_gate_func(4.06)
+            final_state = np.dot(np.dot(swap_with_theta, state_after_cr), swap_with_theta.T.conj())
+
+            st.session_state.level5_final_state_rho = final_state
+            st.session_state.level5_final_state_rho1 = rho_1(final_state)
+            st.session_state.level5_final_state_rho2 = rho_2(final_state)
+            st.session_state.level5_final_bloch_vector1 = bloch_vector(st.session_state.level5_final_state_rho1)
+            st.session_state.level5_final_bloch_vector2 = bloch_vector(st.session_state.level5_final_state_rho2)
+
+        # Add custom CSS for story display
+        st.markdown("""
+                <style>
+                .story-container {
+                    background-color: rgba(20, 20, 60, 0.8);
+                    color:#f0e6ff;
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin: 15px 0;
+                    border: 2px solid #4d79ff;
+                    font-family: 'Share Tech Mono', monospace;
+                    box-shadow: 0 0 15px rgba(77, 121, 255, 0.5);
+                }
+                .gate-info {
+                    background-color: rgba(40, 10, 70, 0.7);
+                    color: #f0e6ff;
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin: 15px 0;
+                    border: 2px solid #9966ff;
+                    font-family: 'Share Tech Mono', monospace;
+                    box-shadow: 0 0 15px rgba(153, 102, 255, 0.5);
+                }
+                .translucent-container {
+                    background-color: rgba(240, 240, 255, 0.2);
+                    padding: 20px;
+                    border-radius: 10px;
+                    margin: 10px 0;
+                }
+                </style>
+                """, unsafe_allow_html=True)
+
+        # Content area
+        if st.session_state.level5_story_index < len(st.session_state.level5_story_content):
+            # Show story
+            st.markdown(f"""
+                    <div class="story-container">
+                        <p style="font-size: 1.1em; line-height: 1.5;">{st.session_state.level5_story_content[st.session_state.level5_story_index]}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            # Continue button
+            col1, col2, col3 = st.columns([1, 1, 1])
+            with col2:
+                if st.button("Continue", key="level5_story_next"):
+                    st.session_state.level5_story_index += 1
+                    st.rerun()
+        else:
+            # After story is complete, show the entangled qubits interface
+
+            # Display gate information
+            st.markdown("""
+                    <div class="gate-info">
+                        <h3>Entanglement Gates</h3>
+                        <p>Use these special gates to manipulate the entangled qubits:</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            # Display the mathematical forms of the gates
+            st.latex(r'''
+                    \text{CNOT} = 
+                    \begin{pmatrix} 
+                    1 & 0 & 0 & 0 \\
+                    0 & 1 & 0 & 0 \\
+                    0 & 0 & 0 & 1 \\
+                    0 & 0 & 1 & 0
+                    \end{pmatrix}
+                    \quad
+                    \text{PSWAP}(\phi) = 
+                    \begin{pmatrix} 
+                    1 & 0 & 0 & 0 \\
+                    0 & 0 & e^{i\phi} & 0 \\
+                    0 & e^{i\phi} & 0 & 0 \\
+                    0 & 0 & 0 & 1
+                    \end{pmatrix}
+                    \quad
+                    \text{CR}(\theta) = 
+                    \begin{pmatrix} 
+                    1 & 0 & 0 & 0 \\
+                    0 & 1 & 0 & 0 \\
+                    0 & 0 & 1 & 0 \\
+                    0 & 0 & 0 & e^{i\theta}
+                    \end{pmatrix}
+                    ''')
+
+            # Create layout for the two qubits
+            col1, col2, col3, col4 = st.columns([1, 5, 5, 1])
+
+            with col2:
+                st.header("Your Qubit")
+
+                # Create placeholders for visualizations
+                bloch_placeholder1 = st.empty()
+                rho_placeholder1 = st.empty()
+
+                # Display Bloch sphere for first qubit
+                current_bloch_vector1 = bloch_vector(st.session_state.level5_state_rho1)
+                with bloch_placeholder1:
+                    plot_bloch_sphere(current_bloch_vector1, st.session_state.level5_final_bloch_vector1, 'blues',
+                                      "Your Quantum State")
+
+                # Gates for the first qubit
+                st.write("### Apply Gates:")
+                st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+                # Single qubit controls
+                subcol1, subcol2 = st.columns(2)
+                with subcol1:
+                    x_button1 = st.button('X Gate', key="x_gate_1")
+                    y_button1 = st.button('Y Gate', key="y_gate_1")
+                    z_button1 = st.button('Z Gate', key="z_gate_1")
+
+                with subcol2:
+                    # Two-qubit gates
+                    cnot_button1 = st.button('CNOT', key="cnot_gate_1")
+
+                    pswap_theta1 = st.slider('PSWAP φ (radians)',
+                                             min_value=0.0, max_value=2 * np.pi,
+                                             value=np.pi / 2, step=0.01, key="pswap_slider_1")
+                    pswap_button1 = st.button('PSWAP', key="pswap_gate_1")
+
+                    cr_theta1 = st.slider('CR θ (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="cr_slider_1")
+                    cr_button1 = st.button('CR', key="cr_gate_1")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # Display density matrix
+                with rho_placeholder1:
+                    display_rho(st.session_state.level5_state_rho1)
+
+            with col3:
+                st.header("Sonalika's Qubit")
+
+                # Create placeholders for visualizations
+                bloch_placeholder2 = st.empty()
+                rho_placeholder2 = st.empty()
+
+                # Display Bloch sphere for second qubit
+                current_bloch_vector2 = bloch_vector(st.session_state.level5_state_rho2)
+                with bloch_placeholder2:
+                    plot_bloch_sphere(current_bloch_vector2, st.session_state.level5_final_bloch_vector2, 'purples',
+                                      "Sonalika's Quantum State")
+
+                # Gates for the second qubit
+                st.write("### Apply Gates:")
+                st.markdown('<div class="translucent-container">', unsafe_allow_html=True)
+
+                # Single qubit controls
+                subcol1, subcol2 = st.columns(2)
+                with subcol1:
+                    x_button2 = st.button('X Gate', key="x_gate_2")
+                    y_button2 = st.button('Y Gate', key="y_gate_2")
+                    z_button2 = st.button('Z Gate', key="z_gate_2")
+
+                with subcol2:
+                    # Two-qubit gates
+                    cnot_button2 = st.button('CNOT', key="cnot_gate_2")
+
+                    pswap_theta2 = st.slider('PSWAP φ (radians)',
+                                             min_value=0.0, max_value=2 * np.pi,
+                                             value=np.pi / 2, step=0.01, key="pswap_slider_2")
+                    pswap_button2 = st.button('PSWAP', key="pswap_gate_2")
+
+                    cr_theta2 = st.slider('CR θ (radians)',
+                                          min_value=0.0, max_value=2 * np.pi,
+                                          value=np.pi / 4, step=0.01, key="cr_slider_2")
+                    cr_button2 = st.button('CR', key="cr_gate_2")
+
+                st.markdown('</div>', unsafe_allow_html=True)
+
+                # Display density matrix
+                with rho_placeholder2:
+                    display_rho(st.session_state.level5_state_rho2)
+
+            # Extract timeline-based gate histories for visualization
+            gate_history_q1 = []
+            gate_history_q2 = []
+
+            if len(st.session_state.level5_combined_gate_history) > 0:
+                # Sort by time step to ensure proper order
+                sorted_history = sorted(st.session_state.level5_combined_gate_history, key=lambda x: x[0])
+
+                # Get the maximum time step
+                max_time = sorted_history[-1][0] + 1
+
+                # Initialize empty histories with None placeholders for each time step
+                gate_history_q1 = [None] * max_time
+                gate_history_q2 = [None] * max_time
+
+                # Fill in gates at appropriate time steps
+                for time, qubit, gate in sorted_history:
+                    if qubit == 1:
+                        gate_history_q1[time] = gate
+                    elif qubit == 2:
+                        gate_history_q2[time] = gate
+                    elif qubit == "both":  # For two-qubit gates that affect both
+                        gate_history_q1[time] = gate
+                        gate_history_q2[time] = gate
+
+                # Remove None values
+                gate_history_q1 = [g for g in gate_history_q1 if g is not None]
+                gate_history_q2 = [g for g in gate_history_q2 if g is not None]
+
+            # Process button clicks for Qubit 1
+            if x_button1:
+                gate = pauli_x()
+                st.session_state.level5_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level5_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append((st.session_state.level5_time_step, 1, 'X'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif y_button1:
+                gate = pauli_y()
+                st.session_state.level5_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level5_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append((st.session_state.level5_time_step, 1, 'Y'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif z_button1:
+                gate = pauli_z()
+                st.session_state.level5_state_rho = np.kron(gate,
+                                                            np.eye(2)) @ st.session_state.level5_state_rho @ np.kron(
+                    gate.conj().T, np.eye(2))
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append((st.session_state.level5_time_step, 1, 'Z'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif cnot_button1:
+                gate = cnot_gate()
+                st.session_state.level5_state_rho = np.dot(np.dot(gate, st.session_state.level5_state_rho), gate.T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, "both", 'CNOT'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif pswap_button1:
+                gate = pswap_gate(pswap_theta1)
+                st.session_state.level5_state_rho = np.dot(np.dot(gate, st.session_state.level5_state_rho),
+                                                           gate.conj().T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, "both", f'PSWAP({pswap_theta1:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif cr_button1:
+                gate = cr_gate(cr_theta1)
+                st.session_state.level5_state_rho = gate @ st.session_state.level5_state_rho @ gate.conj().T
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, "both", f'CR({cr_theta1:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            # Process button clicks for Qubit 2
+            elif x_button2:
+                gate = pauli_x()
+                st.session_state.level5_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level5_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append((st.session_state.level5_time_step, 2, 'X'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif y_button2:
+                gate = pauli_y()
+                st.session_state.level5_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level5_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append((st.session_state.level5_time_step, 2, 'Y'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif z_button2:
+                gate = pauli_z()
+                st.session_state.level5_state_rho = np.kron(np.eye(2),
+                                                            gate) @ st.session_state.level5_state_rho @ np.kron(
+                    np.eye(2), gate.conj().T)
+                # Record gate in the combined history with time step
+                st.session_state.level5_combined_gate_history.append((st.session_state.level5_time_step, 2, 'Z'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif cnot_button2:
+                gate = cnot_gate()
+                st.session_state.level5_state_rho = np.dot(np.dot(gate, st.session_state.level5_state_rho), gate.T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, "both", 'CNOT'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+            elif pswap_button2:
+                gate = pswap_gate(pswap_theta2)
+                st.session_state.level5_state_rho = np.dot(np.dot(gate, st.session_state.level5_state_rho),
+                                                           gate.conj().T)
+                # Record gate in the combined history with time step (affects both qubits)
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, "both", f'PSWAP({pswap_theta2:.2f})'))
+                st.session_state.level5_time_step += 1
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+                st.rerun()
+
+
+            elif cr_button2:
+
+                gate = cr_gate(cr_theta2)
+
+                st.session_state.level5_state_rho = gate @ st.session_state.level5_state_rho @ gate.conj().T
+
+                # Record gate in the combined history with time step (affects both qubits)
+
+                st.session_state.level5_combined_gate_history.append(
+                    (st.session_state.level5_time_step, "both", f'CR({cr_theta2:.2f})'))
+
+                st.session_state.level5_time_step += 1
+
+                st.session_state.level5_state_rho1 = rho_1(st.session_state.level5_state_rho)
+
+                st.session_state.level5_state_rho2 = rho_2(st.session_state.level5_state_rho)
+
+                st.rerun()
+
+                # Display circuit history
+
+            st.markdown("### Two-Qubit Circuit History")
+
+            # Create accurate circuit visualization based on the combined history
+
+            max_time = st.session_state.level5_time_step
+
+            if max_time > 0:
+
+                # Sort history by time
+
+                sorted_history = sorted(st.session_state.level5_combined_gate_history, key=lambda x: x[0])
+
+                # Create the circuit figure
+
+                circuit_fig = go.Figure()
+
+                # Add qubit wires (length based on the number of time steps)
+
+                circuit_fig.add_trace(go.Scatter(
+
+                    x=[0, max_time],
+
+                    y=[1, 1],
+
+                    mode="lines",
+
+                    line=dict(width=3, color="black"),
+
+                    name="Your Qubit"
+
+                ))
+
+                circuit_fig.add_trace(go.Scatter(
+
+                    x=[0, max_time],
+
+                    y=[0, 0],
+
+                    mode="lines",
+
+                    line=dict(width=3, color="black"),
+
+                    name="Sonalika's Qubit"
+
+                ))
+
+                # Add labels for the qubits
+
+                circuit_fig.add_annotation(
+
+                    x=-0.5, y=1,
+
+                    text="Your Qubit",
+
+                    showarrow=False,
+
+                    font=dict(size=14, color="black")
+
+                )
+
+                circuit_fig.add_annotation(
+
+                    x=-0.5, y=0,
+
+                    text="Sonalika",
+
+                    showarrow=False,
+
+                    font=dict(size=14, color="black")
+
+                )
+
+                # Add gates at appropriate positions
+
+                for time_step, qubit, gate_name in sorted_history:
+
+                    if qubit == 1 or qubit == "both":
+                        # Add gate for qubit 1
+
+                        circuit_fig.add_trace(go.Scatter(
+
+                            x=[time_step], y=[1],
+
+                            mode="markers+text",
+
+                            marker=dict(symbol="square", size=40, color="pink"),
+
+                            text=[gate_name],
+
+                            textposition='middle center',
+
+                            name=f"Gate at t={time_step}"
+
+                        ))
+
+                    if qubit == 2 or qubit == "both":
+                        # Add gate for qubit 2
+
+                        circuit_fig.add_trace(go.Scatter(
+
+                            x=[time_step], y=[0],
+
+                            mode="markers+text",
+
+                            marker=dict(symbol="square", size=40, color="skyblue"),
+
+                            text=[gate_name],
+
+                            textposition='middle center',
+
+                            name=f"Gate at t={time_step}"
+
+                        ))
+
+                    # If it's a two-qubit gate, draw a line connecting the qubits
+
+                    if qubit == "both":
+                        circuit_fig.add_trace(go.Scatter(
+
+                            x=[time_step, time_step],
+
+                            y=[0, 1],
+
+                            mode="lines",
+
+                            line=dict(width=2, color="purple", dash="dot"),
+
+                            name=f"Connection at t={time_step}"
+
+                        ))
+
+                # Update layout
+
+                circuit_fig.update_layout(
+
+                    xaxis=dict(range=[-1, max_time + 0.5], zeroline=False, showticklabels=True, title="Time Step"),
+
+                    yaxis=dict(range=[-0.5, 1.5], zeroline=False, showticklabels=False),
+
+                    margin=dict(l=30, r=30, b=30, t=30),
+
+                    height=250,
+
+                    width=700,
+
+                    showlegend=False,
+
+                    title="Two-Qubit Circuit History"
+
+                )
+
+                # Display the circuit
+
+                st.plotly_chart(circuit_fig, key=f"two_qubit_circuit_{max_time}")
+
+                # Show gate history as text for reference
+
+                st.write("Gate sequence:")
+
+                for time_step, qubit, gate_name in sorted_history:
+
+                    if qubit == "both":
+
+                        qubit_text = "Both qubits"
+
+                    elif qubit == 1:
+
+                        qubit_text = "Your qubit"
+
+                    else:
+
+                        qubit_text = "Sonalika's qubit"
+
+                    st.write(f"Step {time_step}: {gate_name} on {qubit_text}")
+
+            else:
+
+                st.write("No gates applied yet. Apply gates to see the circuit history.")
+
+            # Check if target state is reached (approx)
+
+            target_vector1 = st.session_state.level5_final_bloch_vector1
+
+            target_vector2 = st.session_state.level5_final_bloch_vector2
+
+            current_vector1 = bloch_vector(st.session_state.level5_state_rho1)
+
+            current_vector2 = bloch_vector(st.session_state.level5_state_rho2)
+
+            distance1 = np.linalg.norm(target_vector1 - current_vector1)
+
+            distance2 = np.linalg.norm(target_vector2 - current_vector2)
+
+            # Level completion
+
+            if distance1 < 0.1 and distance2 < 0.1:
+                st.balloons()
+
+                st.success(
+                    "You've successfully coordinated with Sonalika to reach the target state! The entangled Bloch spheres begin to separate...")
+
+            # Show how close they are to solution
+
+            st.progress(max(0, 1.0 - (distance1 + distance2) / 2))
+
+            score = 0
+
+            if distance1 < 0.1 and distance2 < 0.1 or st.button("Click when done!"):
+                score = 50
+
+            if level(score):
+                level_transition()
+
+            st.button("End game")
+
+# Run the app
+if __name__ == "__main__":
+    main()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
