@@ -180,7 +180,7 @@ def set_background(image_path):
         unsafe_allow_html=True,
     )
 
-set_background("/Users/unnatiakhouri/Documents/GitHub/BlochOut/backgrounds/back.PNG")
+set_background("backgrounds/back.PNG")
 #Title of the game
 #st.title('BlochOut - Dual Qubits')
 
