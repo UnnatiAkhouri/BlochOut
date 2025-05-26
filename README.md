@@ -15,7 +15,7 @@ Welcome to the Quantum Game! This game helps you explore quantum concepts using 
 ## How to Run:
 1. Clone the repository.
 2. Install required dependencies.
-3. Run the game using `streamlit run qubit_game.py`.
+3. Run the game using `streamlit run qubit_game.py` or play online: https://blochout.streamlit.app
 
 Enjoy exploring quantum mechanics!
 
