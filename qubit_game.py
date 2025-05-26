@@ -1130,13 +1130,31 @@ def level_transition():
     #st.experimental_rerun()
 
 
+def add_pdf_download():
+    """Add a single PDF download button to your Streamlit app"""
+
+    # Path to your PDF file
+    pdf_path = "assets/BlochOut.pdf"
+
+    # Check if PDF exists and create download button
+    if os.path.exists(pdf_path):
+        with open(pdf_path, "rb") as pdf_file:
+            st.download_button(
+                label="📄 Download Quantum Guide",
+                data=pdf_file.read(),
+                file_name="quantum_computing_guide.pdf",
+                mime="application/pdf"
+            )
+    else:
+        st.warning("⚠️ PDF not found. Please add quantum_guide.pdf to assets/pdfs/")
+
 # ============= Main Game Loop =============
 def main():
     global cnot_gate_q1_controls_q2, cr_gate_q1_controls_q2, cnot_gate_q2_controls_q1, cr_gate_q2_controls_q1
     st.title("Escape the Bloch")
     set_custom_style()
     show_progress()
-
+    add_pdf_download()
     if not check_level_requirements():
         return
 
