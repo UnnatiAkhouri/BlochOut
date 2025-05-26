@@ -1140,9 +1140,9 @@ def add_pdf_download():
     if os.path.exists(pdf_path):
         with open(pdf_path, "rb") as pdf_file:
             st.download_button(
-                label="📄 Download Quantum Guide",
+                label="Download Quantum Guide",
                 data=pdf_file.read(),
-                file_name="quantum_computing_guide.pdf",
+                file_name="BlochOut.pdf",
                 mime="application/pdf"
             )
     else:
