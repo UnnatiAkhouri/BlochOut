@@ -6,6 +6,7 @@ import random
 import matplotlib.pyplot as plt
 import time
 import base64
+import os
 
 #Setups for the game visuals and backgrounds
 st.set_page_config(layout="wide")
