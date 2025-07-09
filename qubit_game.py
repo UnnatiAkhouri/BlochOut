@@ -348,7 +348,7 @@ def two_qubit_swap_state(p1,p2,theta,corr):
 
 # Gate functions
 import numpy as np
-def cz_gate():
+````````````````````````````````````````````````def cz_gate():
     return np.array([[1, 0, 0, 0],
                      [0, 1, 0, 0],
                      [0, 0, 1, 0],
@@ -366,7 +366,7 @@ def pswap_gate(theta):
         [0, np.cos(theta), 1j * np.sin(theta), 0],
         [0, 1j * np.sin(theta), np.cos(theta), 0],
         [0, 0, 0, 1]
-    ])
+    ])````````````````````````````````````````````````
 
 def apply_x_gate(rho):
     """Apply X gate to the given density matrix rho."""
@@ -596,7 +596,7 @@ def draw_circuit(gate_history, color, circuit_key):
         circuit_fig.add_trace(go.Scatter(
             x=[i + 1], y=[0],
             mode="markers+text",
-            marker=dict(symbol="square", size=40, color=color),
+            marker=dict(symbol="square", size=70, color=color),
             text=[gate],
             textposition='middle center',
             name=f"Gate {i + 1}"
