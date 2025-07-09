@@ -1490,14 +1490,14 @@ def main():
                           'circuit1')
 
             # Density matrix visualization
-            st.subheader("Density Matrix Real Parts")
-            fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
-            rho_real = np.real(st.session_state.state_rho)
-            cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
-            fig.colorbar(cax1, ax=ax1)
-            ax1.set_title("Real Part of Density Matrix")
-            plt.tight_layout()
-            st.pyplot(fig)
+            #st.subheader("Density Matrix Real Parts")
+            #fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+            #rho_real = np.real(st.session_state.state_rho)
+            #cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
+            #fig.colorbar(cax1, ax=ax1)
+            #ax1.set_title("Real Part of Density Matrix")
+            #plt.tight_layout()
+            #st.pyplot(fig)
 
             # Level completion check
             if st.session_state.current_riddle >= len(st.session_state.riddles) or st.session_state.score >= 50:
@@ -1833,14 +1833,14 @@ def main():
                           'circuit1')
 
             # Density matrix visualization
-            st.subheader("Density Matrix Real Parts")
-            fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
-            rho_real = np.real(st.session_state.state_rho)
-            cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
-            fig.colorbar(cax1, ax=ax1)
-            ax1.set_title("Real Part of Density Matrix")
-            plt.tight_layout()
-            st.pyplot(fig)
+            #st.subheader("Density Matrix Real Parts")
+            #fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+            #rho_real = np.real(st.session_state.state_rho)
+            #cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
+            #fig.colorbar(cax1, ax=ax1)
+            #ax1.set_title("Real Part of Density Matrix")
+            #plt.tight_layout()
+            #st.pyplot(fig)
 
             # Level completion check
             if st.session_state.level1b_current_riddle >= len(
@@ -2171,7 +2171,7 @@ def main():
 
                 # Density matrix visualization
 
-                st.subheader("Density Matrix Real Parts")
+                #st.subheader("Density Matrix Real Parts")
 
                 # Level completion
 
@@ -2185,19 +2185,19 @@ def main():
 
                 st.button("Take me to next level")
 
-                fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+                #fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
 
-                rho_real = np.real(st.session_state.state_rho)
+                #rho_real = np.real(st.session_state.state_rho)
 
-                cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
+                #cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
 
-                fig.colorbar(cax1, ax=ax1)
+                #fig.colorbar(cax1, ax=ax1)
 
-                ax1.set_title("Real Part of Density Matrix")
+                #ax1.set_title("Real Part of Density Matrix")
 
-                plt.tight_layout()
+                #plt.tight_layout()
 
-                st.pyplot(fig)
+                #st.pyplot(fig)
 
         # Game completion check
 
@@ -2636,21 +2636,21 @@ def main():
 
                 # Density matrix visualization
 
-                st.subheader("Density Matrix Real Parts")
+                #st.subheader("Density Matrix Real Parts")
 
-                fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
+                #fig, ax1 = plt.subplots(1, 1, figsize=(12, 6))
 
-                rho_real = np.real(st.session_state.level3_state_rho)
+                #rho_real = np.real(st.session_state.level3_state_rho)
 
-                cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
+                #cax1 = ax1.imshow(rho_real, cmap="BuPu", interpolation="nearest")
 
-                fig.colorbar(cax1, ax=ax1)
+                #fig.colorbar(cax1, ax=ax1)
 
-                ax1.set_title("Real Part of Density Matrix")
+                #ax1.set_title("Real Part of Density Matrix")
 
-                plt.tight_layout()
+                #plt.tight_layout()
 
-                st.pyplot(fig)
+                #st.pyplot(fig)
 
                 # Level completion check
 
