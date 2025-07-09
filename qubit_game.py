@@ -366,7 +366,7 @@ def pswap_gate(theta):
         [0, np.cos(theta), 1j * np.sin(theta), 0],
         [0, 1j * np.sin(theta), np.cos(theta), 0],
         [0, 0, 0, 1]
-    ])````````````````````````````````````````````````
+    ])
 
 def apply_x_gate(rho):
     """Apply X gate to the given density matrix rho."""
