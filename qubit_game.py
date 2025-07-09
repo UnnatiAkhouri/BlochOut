@@ -348,7 +348,7 @@ def two_qubit_swap_state(p1,p2,theta,corr):
 
 # Gate functions
 import numpy as np
-````````````````````````````````````````````````def cz_gate():
+def cz_gate():
     return np.array([[1, 0, 0, 0],
                      [0, 1, 0, 0],
                      [0, 0, 1, 0],
