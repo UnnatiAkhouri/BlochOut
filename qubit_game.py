@@ -1001,7 +1001,7 @@ def draw_circuit(gate_history, color, circuit_key):
         circuit_fig.add_trace(go.Scatter(
             x=[i + 1], y=[0],
             mode="markers+text",
-            marker=dict(symbol="square", size=40, color=color),
+            marker=dict(symbol="square", size=70, color=color),
             text=[gate],
             textposition='middle center',
             name=f"Gate {i + 1}"
@@ -2735,7 +2735,7 @@ def main():
                 circuit_fig.add_trace(go.Scatter(
                     x=[i + 1], y=[1],
                     mode="markers+text",
-                    marker=dict(symbol="square", size=40, color="pink"),
+                    marker=dict(symbol="square", size=70, color="pink"),
                     text=[gate],
                     textposition='middle center',
                     name=f"Qubit 1 Gate {i + 1}"
@@ -2746,7 +2746,7 @@ def main():
                 circuit_fig.add_trace(go.Scatter(
                     x=[i + 1], y=[0],
                     mode="markers+text",
-                    marker=dict(symbol="square", size=40, color="skyblue"),
+                    marker=dict(symbol="square", size=70, color="skyblue"),
                     text=[gate],
                     textposition='middle center',
                     name=f"Qubit 2 Gate {i + 1}"
@@ -3280,7 +3280,7 @@ def main():
 
                             mode="markers+text",
 
-                            marker=dict(symbol="square", size=40, color="pink"),
+                            marker=dict(symbol="square", size=70, color="pink"),
 
                             text=[gate_name],
 
@@ -3299,7 +3299,7 @@ def main():
 
                             mode="markers+text",
 
-                            marker=dict(symbol="square", size=40, color="skyblue"),
+                            marker=dict(symbol="square", size=70, color="skyblue"),
 
                             text=[gate_name],
 
@@ -4037,7 +4037,7 @@ def main():
                         circuit_fig.add_trace(go.Scatter(
                             x=[time_step], y=[1],
                             mode="markers+text",
-                            marker=dict(symbol="square", size=40, color="pink"),
+                            marker=dict(symbol="square", size=70, color="pink"),
                             text=[gate_name],
                             textposition='middle center',
                             #name=f"Gate at t={time_step}"
@@ -4048,7 +4048,7 @@ def main():
                         circuit_fig.add_trace(go.Scatter(
                             x=[time_step], y=[0],
                             mode="markers+text",
-                            marker=dict(symbol="square", size=40, color="skyblue"),
+                            marker=dict(symbol="square", size=70, color="skyblue"),
                             text=[gate_name],
                             textposition='middle center',
                             #name=f"Gate at t={time_step}"
@@ -4699,7 +4699,7 @@ def main():
 
                             mode="markers+text",
 
-                            marker=dict(symbol="square", size=40, color="pink"),
+                            marker=dict(symbol="square", size=70, color="pink"),
 
                             text=[gate_name],
 
@@ -4718,7 +4718,7 @@ def main():
 
                             mode="markers+text",
 
-                            marker=dict(symbol="square", size=40, color="skyblue"),
+                            marker=dict(symbol="square", size=70, color="skyblue"),
 
                             text=[gate_name],
 
