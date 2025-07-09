@@ -668,7 +668,7 @@ def draw_two_qubit_circuit(gate_history1, gate_history2):
         circuit_fig.add_trace(go.Scatter(
             x=[i + 1], y=[1],
             mode="markers+text",
-            marker=dict(symbol="square", size=40, color="pink"),
+            marker=dict(symbol="square", size=70, color="pink"),
             text=[gate],
             textposition='middle center',
             name=f"Qubit 1 Gate {i + 1}"
@@ -679,7 +679,7 @@ def draw_two_qubit_circuit(gate_history1, gate_history2):
         circuit_fig.add_trace(go.Scatter(
             x=[i + 1], y=[0],
             mode="markers+text",
-            marker=dict(symbol="square", size=40, color="skyblue"),
+            marker=dict(symbol="square", size=70, color="skyblue"),
             text=[gate],
             textposition='middle center',
             name=f"Qubit 2 Gate {i + 1}"
