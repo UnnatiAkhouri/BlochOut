@@ -599,7 +599,7 @@ def draw_circuit(gate_history, color, circuit_key):
             marker=dict(symbol="square", size=70, color=color),
             text=[gate],
             textposition='middle center',
-            textfont=dict(size=16, color="black"),
+            textfont=dict(size=25, color="black"),
             name=f"Gate {i + 1}"
         ))
 
@@ -672,7 +672,7 @@ def draw_two_qubit_circuit(gate_history1, gate_history2):
             marker=dict(symbol="square", size=70, color="pink"),
             text=[gate],
             textposition='middle center',
-            textfont=dict(size=16, color="black"),
+            textfont=dict(size=25, color="black"),
             name=f"Qubit 1 Gate {i + 1}"
         ))
 
@@ -684,7 +684,7 @@ def draw_two_qubit_circuit(gate_history1, gate_history2):
             marker=dict(symbol="square", size=70, color="skyblue"),
             text=[gate],
             textposition='middle center',
-            textfont=dict(size=16, color="black"),
+            textfont=dict(size=25, color="black"),
             name=f"Qubit 2 Gate {i + 1}"
         ))
 
@@ -1007,7 +1007,7 @@ def draw_circuit(gate_history, color, circuit_key):
             marker=dict(symbol="square", size=70, color=color),
             text=[gate],
             textposition='middle center',
-            textfont=dict(size=16, color="black"),
+            textfont=dict(size=25, color="black"),
             name=f"Gate {i + 1}"
         ))
 
@@ -2742,7 +2742,7 @@ def main():
                     marker=dict(symbol="square", size=70, color="pink"),
                     text=[gate],
                     textposition='middle center',
-                    textfont=dict(size=16, color="black"),
+                    textfont=dict(size=25, color="black"),
                     name=f"Qubit 1 Gate {i + 1}"
                 ))
 
@@ -2754,7 +2754,7 @@ def main():
                     marker=dict(symbol="square", size=70, color="skyblue"),
                     text=[gate],
                     textposition='middle center',
-                    textfont=dict(size=16, color="black"),
+                    textfont=dict(size=25, color="black"),
                     name=f"Qubit 2 Gate {i + 1}"
                 ))
 
@@ -3291,7 +3291,7 @@ def main():
                             text=[gate_name],
 
                             textposition='middle center',
-                            textfont=dict(size=16, color="black"),
+                            textfont=dict(size=25, color="black"),
 
                             name=f"Gate at t={time_step}"
 
@@ -3311,7 +3311,7 @@ def main():
                             text=[gate_name],
 
                             textposition='middle center',
-                            textfont=dict(size=16, color="black"),
+                            textfont=dict(size=25, color="black"),
 
                             name=f"Gate at t={time_step}"
 
@@ -4048,7 +4048,7 @@ def main():
                             marker=dict(symbol="square", size=70, color="pink"),
                             text=[gate_name],
                             textposition='middle center',
-                            textfont=dict(size=16, color="black"),
+                            textfont=dict(size=25, color="black"),
                             #name=f"Gate at t={time_step}"
                         ))
 
@@ -4060,7 +4060,7 @@ def main():
                             marker=dict(symbol="square", size=70, color="skyblue"),
                             text=[gate_name],
                             textposition='middle center',
-                            textfont=dict(size=16, color="black"),
+                            textfont=dict(size=25, color="black"),
                             #name=f"Gate at t={time_step}"
                         ))
 
@@ -4714,7 +4714,7 @@ def main():
                             text=[gate_name],
 
                             textposition='middle center',
-                            textfont=dict(size=16, color="black"),
+                            textfont=dict(size=25, color="black"),
 
                             name=f"Gate at t={time_step}"
 
@@ -4734,7 +4734,7 @@ def main():
                             text=[gate_name],
 
                             textposition='middle center',
-                            textfont=dict(size=16, color="black"),
+                            textfont=dict(size=25, color="black"),
 
                             name=f"Gate at t={time_step}"
 
