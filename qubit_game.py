@@ -4456,7 +4456,7 @@ def main():
             with col1:
                 st.write("**Alice's qubits** (destroyed)")
                 destroyed_bloch = bloch_vector(destroyed_state)
-                plot_bloch_sphere(destroyed_bloch, np.array([0, 0, 0]), 'grays', "Destroyed")
+                plot_bloch_sphere(destroyed_bloch, np.array([0, 0, 0]), 'Greys', "Destroyed")
                 st.write("💥 Information gone!")
 
             with col2:
