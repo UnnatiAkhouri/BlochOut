@@ -4843,7 +4843,7 @@ def main():
 
     elif st.session_state.current_level == 1:
         st.markdown("""
-            <h1 style="color: #2c3e50; font-family: 'Helvetica', cursive;">
+            <h1 style="color: #FFFFFF; font-family: 'Helvetica', cursive;">
                 Congratulations!
             </h1>
             <p style="font-size: 1.3em; color: #FFFFFF; line-height: 1.6; margin: 20px 0;">
