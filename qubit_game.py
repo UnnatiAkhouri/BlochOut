@@ -4285,8 +4285,8 @@ def main():
             # Step 3: After Hadamard
             st.markdown("Step 3: Input qubit now tests BOTH 0 and 1 at once!")
 
-            rho1 = rho_1(st.session_state.deutsch_state)
-            rho2 = rho_2(st.session_state.deutsch_state)
+            rho1 = extract_rho_1(st.session_state.deutsch_state)
+            rho2 = extract_rho_2(st.session_state.deutsch_state)
 
             col1, col2 = st.columns(2)
             with col1:
@@ -4315,7 +4315,7 @@ def main():
             # Step 4: Result
             st.markdown("Step 4: Read the answer!")
 
-            rho1 = rho_1(st.session_state.deutsch_state)
+            rho1 = extract_rho_1(st.session_state.deutsch_state)
             bloch1 = bloch_vector(rho1)
 
             col1, col2 = st.columns(2)
