@@ -2203,7 +2203,7 @@ def main():
 
     elif st.session_state.current_level == 4:
 
-        st.header("Level 3: Universal Gates")
+        st.header("Level 4: Universal Gates")
 
         # Define your rho_1 and rho_2 functions
 
@@ -2446,7 +2446,7 @@ def main():
 
                     # Add more detailed feedback
                     if progress > 0.95:
-                        st.success("Perfect! You're extremely close to the target state!")
+                        st.success("Perfect! You're close enough to escape out!")
                     elif progress > 0.9:
                         st.info("Very close! Just a tiny adjustment needed!")
                     elif progress > 0.75:
@@ -2670,8 +2670,8 @@ def main():
 
         # Game completion check
 
-    elif st.session_state.current_level == 5:
-        st.header("Level 4: Entangled Spheres")
+    elif st.session_state.current_level == 7:
+        st.header("Level 5: Entangled Spheres")
 
         # Define the rho functions for reduced density matrices
         def rho_1(rho_2qubit):
@@ -3418,7 +3418,7 @@ def main():
 
             st.button("Take me to next level")
 
-    elif st.session_state.current_level == 7:
+    elif st.session_state.current_level == 5:
         st.header("Level 5: Quantum Rotation Masters")
 
         # Define the rho functions for reduced density matrices
