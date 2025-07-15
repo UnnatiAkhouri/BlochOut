@@ -4141,9 +4141,9 @@ def main():
             combined_progress = max(0, min(1.0, 1.0 - (distance1 + distance2) / 4.0))
             st.progress(combined_progress)
 
-            if combined_progress > 0.95:
+            if combined_progress > 0.9:
                 st.success("Amazing! Both qubits are aligned perfectly with their targets!")
-            elif combined_progress > 0.9:
+            elif combined_progress > 0.85:
                 st.info("You're very close to completing the challenge!")
             elif combined_progress > 0.75:
                 st.info("Making good progress! Keep adjusting the gates.")
