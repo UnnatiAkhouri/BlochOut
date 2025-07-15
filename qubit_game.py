@@ -1882,7 +1882,6 @@ def main():
                     st.session_state.current_level = 3
                     st.rerun()
 
-
     elif st.session_state.current_level == 3:  # or should this be level 3?
 
         st.header("Level 3: Quantum Rotations")
