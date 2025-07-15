@@ -1174,7 +1174,7 @@ def main():
         st.session_state.current_level = 1
 
     # Level 1 logic
-    if st.session_state.current_level == 8:
+    if st.session_state.current_level == 7:
         st.header("Level 1: Come back to *your-qubit-self!*")
 
         # Initialize feedback state variables
@@ -4182,7 +4182,7 @@ def main():
                 st.session_state.current_level = 7
                 st.rerun()
 
-    elif st.session_state.current_level == 7:
+    elif st.session_state.current_level == 1:
 
         st.header("Level 5: Maximally Entangled Spheres")
 
@@ -4841,7 +4841,7 @@ def main():
 
             st.button("End game")
 
-    elif st.session_state.current_level == 1:
+    elif st.session_state.current_level == 8:
         st.markdown("""
             <h1 style="color: #FFFFFF; font-family: 'Helvetica', cursive;">
                 Congratulations!
