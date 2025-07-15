@@ -1174,7 +1174,7 @@ def main():
         st.session_state.current_level = 1
 
     # Level 1 logic
-    if st.session_state.current_level == 7:
+    if st.session_state.current_level == 6:
         st.header("Level 1: Come back to *your-qubit-self!*")
 
         # Initialize feedback state variables
@@ -2670,7 +2670,7 @@ def main():
 
         # Game completion check
 
-    elif st.session_state.current_level == 6:
+    elif st.session_state.current_level == 1:
         st.header("Level 4: Entangled Spheres")
 
         # Define the rho functions for reduced density matrices
@@ -4182,7 +4182,7 @@ def main():
                 st.session_state.current_level = 7
                 st.rerun()
 
-    elif st.session_state.current_level == 1:
+    elif st.session_state.current_level == 7:
 
         st.header("Level 5: Maximally Entangled Spheres")
 
