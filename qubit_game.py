@@ -1212,7 +1212,7 @@ def main():
         st.session_state.current_level = 1
 
     # Level 1 logic
-    if st.session_state.current_level == 7:
+    if st.session_state.current_level == 1:
         st.header("Level 1: Come back to *your-qubit-self!*")
 
         # Initialize feedback state variables
@@ -4356,167 +4356,167 @@ def main():
                 if level(50):
                     level_transition()
 
-    elif st.session_state.current_level == 1:
-        st.header("Level 7: Quantum Teleportation - Beam Me Up! 📡")
-
-        st.markdown("""
-        ### The Mission
-        Alice wants to send a quantum state to Bob instantly!
-        But she can't just copy it (no-cloning theorem) or send it directly.
-
-        **Solution**: Use quantum entanglement + classical communication! 🔗
-        """)
-
-        # Initialize state
-        if 'teleport_step' not in st.session_state:
-            st.session_state.teleport_step = 0
-
-        if st.session_state.teleport_step == 0:
-            # Step 1: Setup
-            st.markdown("### Step 1: The Setup")
-            st.markdown("Alice has a qubit |+⟩ = (|0⟩ + |1⟩)/√2 to send to Bob")
-
-            # Alice's state to teleport
-            alice_state = np.array([1 / np.sqrt(2), 1 / np.sqrt(2)])
-            alice_rho, _, _, _ = compute_pauli_expansion(alice_state)
-
-            # Bob starts with |0⟩
-            bob_state = np.array([1, 0])
-            bob_rho, _, _, _ = compute_pauli_expansion(bob_state)
-
-            st.session_state.alice_rho = alice_rho
-            st.session_state.bob_rho = bob_rho
-
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write("**Alice's Qubit** (to teleport)")
-                alice_bloch = bloch_vector(alice_rho)
-                plot_bloch_sphere(alice_bloch, np.array([0, 0, 0]), 'blues', "Alice's |+⟩")
-                st.write("State: |+⟩ = (|0⟩ + |1⟩)/√2")
-
-            with col2:
-                st.write("**Bob's Qubit** (destination)")
-                bob_bloch = bloch_vector(bob_rho)
-                plot_bloch_sphere(bob_bloch, np.array([0, 0, 0]), 'reds', "Bob's |0⟩")
-                st.write("State: |0⟩")
-
-            if st.button("Create entanglement between Alice & Bob"):
-                st.session_state.teleport_step = 1
-                st.rerun()
-
-        elif st.session_state.teleport_step == 1:
-            # Step 2: Entanglement
-            st.markdown("### Step 2: Alice & Bob share entangled qubits")
-            st.markdown("Now they both have maximally mixed states (center of Bloch sphere)")
-
-            # Both become maximally mixed due to entanglement
-            mixed_state = 0.5 * np.eye(2)
-            st.session_state.alice_aux = mixed_state
-            st.session_state.bob_rho = mixed_state
-
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.write("**Alice's original qubit**")
-                alice_bloch = bloch_vector(st.session_state.alice_rho)
-                plot_bloch_sphere(alice_bloch, np.array([0, 0, 0]), 'blues', "Still |+⟩")
-
-            with col2:
-                st.write("**Alice's helper** (entangled)")
-                aux_bloch = bloch_vector(st.session_state.alice_aux)
-                plot_bloch_sphere(aux_bloch, np.array([0, 0, 0]), 'greens', "Entangled")
-
-            with col3:
-                st.write("**Bob's qubit** (entangled)")
-                bob_bloch = bloch_vector(st.session_state.bob_rho)
-                plot_bloch_sphere(bob_bloch, np.array([0, 0, 0]), 'reds', "Entangled")
-
-            if st.button("Alice measures her qubits"):
-                st.session_state.teleport_step = 2
-                st.rerun()
-
-        elif st.session_state.teleport_step == 2:
-            # Step 3: Measurement & Teleportation
-            st.markdown("### Step 3: Measurement destroys Alice's qubits but transfers info to Bob!")
-
-            # Simulate measurement result
-            measurement = np.random.choice(["00", "01", "10", "11"])
-            st.session_state.measurement = measurement
-
-            st.info(f"Alice's measurement: {measurement}")
-            st.info("Alice sends this result to Bob via classical communication 📞")
-
-            # Alice's qubits are destroyed (random states)
-            destroyed_state = 0.5 * np.eye(2)
-
-            # Bob gets the teleported state (maybe with corrections needed)
-            teleported_state = np.array([1 / np.sqrt(2), 1 / np.sqrt(2)])
-            bob_final_rho, _, _, _ = compute_pauli_expansion(teleported_state)
-
-            col1, col2, col3 = st.columns(3)
-            with col1:
-                st.write("**Alice's qubits** (destroyed)")
-                destroyed_bloch = bloch_vector(destroyed_state)
-                plot_bloch_sphere(destroyed_bloch, np.array([0, 0, 0]), 'Greys', "Destroyed")
-                st.write("💥 Information gone!")
-
-            with col2:
-                st.write("**Classical message**")
-                st.markdown(f"### 📱 {measurement}")
-                st.write("Sent to Bob")
-
-            with col3:
-                st.write("**Bob's qubit** (teleported!)")
-                bob_bloch = bloch_vector(bob_final_rho)
-                plot_bloch_sphere(bob_bloch, np.array([0, 0, 0]), 'reds', "Teleported!")
-                st.write("State: |+⟩ = (|0⟩ + |1⟩)/√2")
-
-            if st.button("Bob applies correction"):
-                st.session_state.teleport_step = 3
-                st.rerun()
-
-        elif st.session_state.teleport_step == 3:
-            # Step 4: Success!
-            st.markdown("### Step 4: Teleportation Complete! ✨")
-
-            corrections = {
-                "00": "No correction needed",
-                "01": "Apply X gate",
-                "10": "Apply Z gate",
-                "11": "Apply X and Z gates"
-            }
-
-            st.success(f"Bob applies: {corrections[st.session_state.measurement]}")
-
-            # Show before and after
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write("**Original** (Alice had)")
-                original_bloch = np.array([1, 0, 0])  # |+⟩ state
-                plot_bloch_sphere(original_bloch, np.array([0, 0, 0]), 'blues', "Original |+⟩")
-
-            with col2:
-                st.write("**Final** (Bob has)")
-                final_bloch = np.array([1, 0, 0])  # |+⟩ state after correction
-                plot_bloch_sphere(final_bloch, np.array([0, 0, 0]), 'reds', "Teleported |+⟩")
-
-            st.balloons()
-            st.success("🎉 Perfect teleportation! The quantum state traveled instantly!")
-
-            st.markdown("""
-            ### 🧠 Key Points:
-            - ✅ Quantum information transferred instantly
-            - ✅ Original qubit was destroyed (no cloning!)
-            - ✅ Classical communication was needed
-            - ✅ No faster-than-light communication
-            """)
-
-            if st.button("🔄 Teleport again"):
-                st.session_state.teleport_step = 0
-                st.rerun()
-
-            if st.button("🎓 Complete Level"):
-                if level(50):
-                    level_transition()
+    # elif st.session_state.current_level == 1:
+    #     st.header("Level 7: Quantum Teleportation - Beam Me Up!")
+    #
+    #     st.markdown("""
+    #     ### The Mission
+    #     Alice wants to send a quantum state to Bob instantly!
+    #     But she can't just copy it (no-cloning theorem) or send it directly.
+    #
+    #     **Solution**: Use quantum entanglement + classical communication!
+    #     """)
+    #
+    #     # Initialize state
+    #     if 'teleport_step' not in st.session_state:
+    #         st.session_state.teleport_step = 0
+    #
+    #     if st.session_state.teleport_step == 0:
+    #         # Step 1: Setup
+    #         st.markdown("### Step 1: The Setup")
+    #         st.markdown("Alice has a qubit |+⟩ = (|0⟩ + |1⟩)/√2 to send to Bob")
+    #
+    #         # Alice's state to teleport
+    #         alice_state = np.array([1 / np.sqrt(2), 1 / np.sqrt(2)])
+    #         alice_rho, _, _, _ = compute_pauli_expansion(alice_state)
+    #
+    #         # Bob starts with |0⟩
+    #         bob_state = np.array([1, 0])
+    #         bob_rho, _, _, _ = compute_pauli_expansion(bob_state)
+    #
+    #         st.session_state.alice_rho = alice_rho
+    #         st.session_state.bob_rho = bob_rho
+    #
+    #         col1, col2 = st.columns(2)
+    #         with col1:
+    #             st.write("**Alice's Qubit** (to teleport)")
+    #             alice_bloch = bloch_vector(alice_rho)
+    #             plot_bloch_sphere(alice_bloch, np.array([0, 0, 0]), 'blues', "Alice's |+⟩")
+    #             st.write("State: |+⟩ = (|0⟩ + |1⟩)/√2")
+    #
+    #         with col2:
+    #             st.write("**Bob's Qubit** (destination)")
+    #             bob_bloch = bloch_vector(bob_rho)
+    #             plot_bloch_sphere(bob_bloch, np.array([0, 0, 0]), 'reds', "Bob's |0⟩")
+    #             st.write("State: |0⟩")
+    #
+    #         if st.button("Create entanglement between Alice & Bob"):
+    #             st.session_state.teleport_step = 1
+    #             st.rerun()
+    #
+    #     elif st.session_state.teleport_step == 1:
+    #         # Step 2: Entanglement
+    #         st.markdown("### Step 2: Alice & Bob share entangled qubits")
+    #         st.markdown("Now they both have maximally mixed states (center of Bloch sphere)")
+    #
+    #         # Both become maximally mixed due to entanglement
+    #         mixed_state = 0.5 * np.eye(2)
+    #         st.session_state.alice_aux = mixed_state
+    #         st.session_state.bob_rho = mixed_state
+    #
+    #         col1, col2, col3 = st.columns(3)
+    #         with col1:
+    #             st.write("**Alice's original qubit**")
+    #             alice_bloch = bloch_vector(st.session_state.alice_rho)
+    #             plot_bloch_sphere(alice_bloch, np.array([0, 0, 0]), 'blues', "Still |+⟩")
+    #
+    #         with col2:
+    #             st.write("**Alice's helper** (entangled)")
+    #             aux_bloch = bloch_vector(st.session_state.alice_aux)
+    #             plot_bloch_sphere(aux_bloch, np.array([0, 0, 0]), 'greens', "Entangled")
+    #
+    #         with col3:
+    #             st.write("**Bob's qubit** (entangled)")
+    #             bob_bloch = bloch_vector(st.session_state.bob_rho)
+    #             plot_bloch_sphere(bob_bloch, np.array([0, 0, 0]), 'reds', "Entangled")
+    #
+    #         if st.button("Alice measures her qubits"):
+    #             st.session_state.teleport_step = 2
+    #             st.rerun()
+    #
+    #     elif st.session_state.teleport_step == 2:
+    #         # Step 3: Measurement & Teleportation
+    #         st.markdown("### Step 3: Measurement destroys Alice's qubits but transfers info to Bob!")
+    #
+    #         # Simulate measurement result
+    #         measurement = np.random.choice(["00", "01", "10", "11"])
+    #         st.session_state.measurement = measurement
+    #
+    #         st.info(f"Alice's measurement: {measurement}")
+    #         st.info("Alice sends this result to Bob via classical communication 📞")
+    #
+    #         # Alice's qubits are destroyed (random states)
+    #         destroyed_state = 0.5 * np.eye(2)
+    #
+    #         # Bob gets the teleported state (maybe with corrections needed)
+    #         teleported_state = np.array([1 / np.sqrt(2), 1 / np.sqrt(2)])
+    #         bob_final_rho, _, _, _ = compute_pauli_expansion(teleported_state)
+    #
+    #         col1, col2, col3 = st.columns(3)
+    #         with col1:
+    #             st.write("**Alice's qubits** (destroyed)")
+    #             destroyed_bloch = bloch_vector(destroyed_state)
+    #             plot_bloch_sphere(destroyed_bloch, np.array([0, 0, 0]), 'Greys', "Destroyed")
+    #             st.write("💥 Information gone!")
+    #
+    #         with col2:
+    #             st.write("**Classical message**")
+    #             st.markdown(f"### 📱 {measurement}")
+    #             st.write("Sent to Bob")
+    #
+    #         with col3:
+    #             st.write("**Bob's qubit** (teleported!)")
+    #             bob_bloch = bloch_vector(bob_final_rho)
+    #             plot_bloch_sphere(bob_bloch, np.array([0, 0, 0]), 'reds', "Teleported!")
+    #             st.write("State: |+⟩ = (|0⟩ + |1⟩)/√2")
+    #
+    #         if st.button("Bob applies correction"):
+    #             st.session_state.teleport_step = 3
+    #             st.rerun()
+    #
+    #     elif st.session_state.teleport_step == 3:
+    #         # Step 4: Success!
+    #         st.markdown("### Step 4: Teleportation Complete! ✨")
+    #
+    #         corrections = {
+    #             "00": "No correction needed",
+    #             "01": "Apply X gate",
+    #             "10": "Apply Z gate",
+    #             "11": "Apply X and Z gates"
+    #         }
+    #
+    #         st.success(f"Bob applies: {corrections[st.session_state.measurement]}")
+    #
+    #         # Show before and after
+    #         col1, col2 = st.columns(2)
+    #         with col1:
+    #             st.write("**Original** (Alice had)")
+    #             original_bloch = np.array([1, 0, 0])  # |+⟩ state
+    #             plot_bloch_sphere(original_bloch, np.array([0, 0, 0]), 'blues', "Original |+⟩")
+    #
+    #         with col2:
+    #             st.write("**Final** (Bob has)")
+    #             final_bloch = np.array([1, 0, 0])  # |+⟩ state after correction
+    #             plot_bloch_sphere(final_bloch, np.array([0, 0, 0]), 'reds', "Teleported |+⟩")
+    #
+    #         st.balloons()
+    #         st.success("🎉 Perfect teleportation! The quantum state traveled instantly!")
+    #
+    #         st.markdown("""
+    #         ### 🧠 Key Points:
+    #         - ✅ Quantum information transferred instantly
+    #         - ✅ Original qubit was destroyed (no cloning!)
+    #         - ✅ Classical communication was needed
+    #         - ✅ No faster-than-light communication
+    #         """)
+    #
+    #         if st.button("🔄 Teleport again"):
+    #             st.session_state.teleport_step = 0
+    #             st.rerun()
+    #
+    #         if st.button("🎓 Complete Level"):
+    #             if level(50):
+    #                 level_transition()
 
     elif st.session_state.current_level == 9:
 
@@ -5177,7 +5177,7 @@ def main():
 
             st.button("End game")
 
-    elif st.session_state.current_level == 8:
+    elif st.session_state.current_level == 5:
         st.markdown("""
             <h1 style="color: #FFFFFF; font-family: 'Helvetica', cursive;">
                 Congratulations!
