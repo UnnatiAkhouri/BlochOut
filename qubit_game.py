@@ -350,13 +350,17 @@ sigma_z = np.array([[1, 0], [0, -1]])
 # Identity matrix
 I = np.eye(2)
 
+# Add these functions at the TOP of your file, after the existing gate functions
+
 def rho_1(rho_2qubit):
+    """Extract the state of the FIRST qubit by tracing out the second qubit"""
     return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
                      [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
 
 def rho_2(rho_2qubit):
+    """Extract the state of the SECOND qubit by tracing out the first qubit"""
     return np.array([[rho_2qubit[2, 2] + rho_2qubit[0, 0], rho_2qubit[2, 3] + rho_2qubit[0, 1]],
-                     [rho_2qubit[3, 2] + rho_2qubit[1, 0], rho_2qubit[3, 3] + rho
+                     [rho_2qubit[3, 2] + rho_2qubit[1, 0], rho_2qubit[3, 3] + rho_2qubit[1, 1]]])
 
 def bloch_vector(rho):
     """Compute the Bloch vector from a given density matrix rho."""
