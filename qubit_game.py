@@ -297,12 +297,12 @@ ghz = ghz_state().full()
 ghz = np.outer(ghz, np.conj(ghz))
 #print("\nGHZ-State:", ghz)
 
-def rho_1(rho_2qubit):
+def extract_rho_1(rho_2qubit):
     return np.array([[rho_2qubit[0, 0] + rho_2qubit[1, 1], rho_2qubit[0, 2] + rho_2qubit[1, 3]],
                   [rho_2qubit[2, 0] + rho_2qubit[3, 1], rho_2qubit[2, 2] + rho_2qubit[3, 3]]])
 
 # Reduced density matrix for the second qubit (tracing out the first qubit)
-def rho_2(rho_2qubit):
+def extract_rho_2(rho_2qubit):
     return np.array([[rho_2qubit[2, 2] + rho_2qubit[0, 0], rho_2qubit[2, 3] + rho_2qubit[0, 1]],
                   [rho_2qubit[3, 2] + rho_2qubit[1, 0], rho_2qubit[3, 3] + rho_2qubit[1, 1]]])
 
@@ -350,7 +350,6 @@ sigma_z = np.array([[1, 0], [0, -1]])
 # Identity matrix
 I = np.eye(2)
 
-# Add these functions at the TOP of your file, after the existing gate functions
 
 def rho_1(rho_2qubit):
     """Extract the state of the FIRST qubit by tracing out the second qubit"""
@@ -4262,8 +4261,8 @@ def main():
             st.markdown(f"Step 2: Start with |01⟩ - Testing {st.session_state.function_type} function")
 
             # Show initial Bloch spheres
-            rho1 = rho_1(st.session_state.deutsch_state)
-            rho2 = rho_2(st.session_state.deutsch_state)
+            rho1 = extract_rho_1(st.session_state.deutsch_state)
+            rho2 = extract_rho_2(st.session_state.deutsch_state)
 
             col1, col2 = st.columns(2)
             with col1:
