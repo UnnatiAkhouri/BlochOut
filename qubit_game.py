@@ -1212,7 +1212,7 @@ def main():
         st.session_state.current_level = 1
 
     # Level 1 logic
-    if st.session_state.current_level == 6:
+    if st.session_state.current_level == 7:
         st.header("Level 1: Come back to *your-qubit-self!*")
 
         # Initialize feedback state variables
@@ -4219,7 +4219,7 @@ def main():
                 st.session_state.current_level = 7
                 st.rerun()
 
-    elif st.session_state.current_level == 1:
+    elif st.session_state.current_level == 6:
         st.header("Level 6: Deutsch's Algorithm - One Query Wonder!")
 
         st.markdown("""
@@ -4356,7 +4356,7 @@ def main():
                 if level(50):
                     level_transition()
 
-    elif st.session_state.current_level == 7:
+    elif st.session_state.current_level == 1:
         st.header("Level 7: Quantum Teleportation - Beam Me Up! 📡")
 
         st.markdown("""
