@@ -4843,8 +4843,6 @@ def main():
 
     elif st.session_state.current_level == 1:
         st.markdown("""
-        <div style="background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #a8edea 100%); 
-                    padding: 30px; border-radius: 20px; text-align: center; margin: 20px 0;">
             <h1 style="color: #2c3e50; font-family: 'Comic Sans MS', cursive;">
                 Congratulations!
             </h1>
