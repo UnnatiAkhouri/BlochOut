@@ -4843,10 +4843,10 @@ def main():
 
     elif st.session_state.current_level == 1:
         st.markdown("""
-            <h1 style="color: #2c3e50; font-family: 'Comic Sans MS', cursive;">
+            <h1 style="color: #2c3e50; font-family: 'Helvetica', cursive;">
                 Congratulations!
             </h1>
-            <p style="font-size: 1.3em; color: #2c3e50; line-height: 1.6; margin: 20px 0;">
+            <p style="font-size: 1.3em; color: #FFFFFF; line-height: 1.6; margin: 20px 0;">
                 With a final quantum flash, the Bloch spheres dissolve away! You and Sonalika are free! 
                 <br><br>
                 The mysterious voice chuckles warmly: "Well done!" 
