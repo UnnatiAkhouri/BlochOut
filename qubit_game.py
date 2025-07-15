@@ -4858,28 +4858,27 @@ def main():
         </div>
         """, unsafe_allow_html=True)
 
-    st.balloons()
 
-    # Credits
-    st.markdown("---")
-    st.markdown("""
-        Credits
+        # Credits
+        st.markdown("---")
+        st.markdown("""
+            Credits
+    
+          Game Created by: Unnati Akhouri
+    
+            Special thanks to
+            - Sonalika Purkayastha
+            - The QuantumCat
+            - Sonalika's Spacefish (for their travel services)
+            - All quantum adventurers who dared to escape the BlochOut!
+    
+            Built with Streamlit and Quantum Mechanics!
+            """)
 
-      Game Created by: Unnati Akhouri
-
-        Special thanks to
-        - Sonalika Purkayastha
-        - The QuantumCat
-        - Sonalika's Spacefish (for their travel services)
-        - All quantum adventurers who dared to escape the BlochOut!
-
-        Built with Streamlit and Quantum Mechanics!
-        """)
-
-    if st.button("🔄 Play Again"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
-        st.rerun()
+        if st.button("🔄 Play Again"):
+            for key in list(st.session_state.keys()):
+                del st.session_state[key]
+            st.rerun()
 
 
 
