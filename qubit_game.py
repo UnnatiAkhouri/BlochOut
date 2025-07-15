@@ -1174,7 +1174,7 @@ def main():
         st.session_state.current_level = 1
 
     # Level 1 logic
-    if st.session_state.current_level == 1:
+    if st.session_state.current_level == 8:
         st.header("Level 1: Come back to *your-qubit-self!*")
 
         # Initialize feedback state variables
@@ -1204,7 +1204,7 @@ def main():
 
                 "Suddenly, you hear a voice that seems to come from everywhere and nowhere at once. 'Ah, a new consciousness enters the quantum realm,' the voice resonates, its tone both amused and curious. 'Lost between states, are we? How delightfully uncertain!' The voice presents you with riddles and says 'finally a spin to my tale! If you wish to get back to your hooman form, you must solve some puzzles first!'",
 
-                "A control panel materializes before you—gates labeled with strange symbols: X, Y, Z, H, S, T. You recognize them somehow as quantum gates—tools to manipulate your very state of being. 'Choose wisely,' the voice purrs. 'The wrong transformation might scatter your consciousness across multiple universes. But the right one...' The voice trails off into a chuckle that sounds like static interference.",
+                "A control panel materializes before you—gates labeled with strange symbols: X, Y, Z, H, S, T. You recognize them somehow as quantum gates—tools to manipulate your very state of being. 'Choose wisely,' the voice purrs. 'The wrong transformation might scatter your existence. But the right one...' The voice trails off into a chuckle that sounds like static interference.",
                 
                 "But before you can learn how top navigate this world, you must first learn what each of the moves do! Solve the riddles by finding the correct gate match! But remember, it is important to figure out how many times you must apply a gate to come back to yourself! You realize this will surely help you later on even if you applied the wrong gate! You can undo the action by knowing precisely how many times you must apply the same gate!"
             ]
@@ -4840,6 +4840,50 @@ def main():
                 level_transition()
 
             st.button("End game")
+
+    elif st.session_state.current_level == 1:
+        st.markdown("""
+        <div style="background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 50%, #a8edea 100%); 
+                    padding: 30px; border-radius: 20px; text-align: center; margin: 20px 0;">
+            <h1 style="color: #2c3e50; font-family: 'Comic Sans MS', cursive;">
+                Congratulations!
+            </h1>
+            <p style="font-size: 1.3em; color: #2c3e50; line-height: 1.6; margin: 20px 0;">
+                With a final quantum flash, the Bloch spheres dissolve away! You and Sonalika are free! 
+                <br><br>
+                The mysterious voice chuckles warmly: "Well done!" 
+                <br><br>
+                Suddenly, a cosmic cat wearing a tiny bow tie appears, floating beside a magnificent 
+                iridescent space fish. "Hop aboard!" the Quantum Cat purrs. And of course, there's no denying a Quantum Cat and their spacefish. "
+                <br><br>
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.balloons()
+
+    # Credits
+    st.markdown("---")
+    st.markdown("""
+        Credits
+
+      Game Created by: Unnati Akhouri
+
+        Special thanks to
+        - Sonalika Purkayastha
+        - The QuantumCat
+        - Sonalika's Spacefish (for their travel services)
+        - All quantum adventurers who dared to escape the BlochOut!
+
+        Built with Streamlit and Quantum Mechanics!
+        """)
+
+    if st.button("🔄 Play Again"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
+
+
 
 # Run the app
 if __name__ == "__main__":
